@@ -2,6 +2,12 @@
 name = "smartschool"
 version = "0.1.0"
 authors = ["Bas De Bue <bas.de.bue@edpnet.be>"]
+license = "MIT"
+readme = "README.md"
+repository = "https://github.com/basdebue/smartschool"
+description = "Smartschool client library for Rust."
+categories = ["api-bindings"]
+keywords = ["api", "smartschool"]
 edition = "2018"
 
 [dependencies]
