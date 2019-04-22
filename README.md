@@ -1,7 +1,7 @@
 # smartschool
 
 [![crates.io](https://img.shields.io/crates/v/smartschool.svg)](https://crates.io/crates/smartschool)
-![matrix](https://img.shields.io/matrix/rust-smsc:matrix.org.svg)
+[![matrix](https://img.shields.io/matrix/rust-smartschool:matrix.org.svg)](https://matrix.to/#/#rust-smartschool:matrix.org)
 
 Smartschool client library for Rust.
 
