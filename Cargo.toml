@@ -1,0 +1,17 @@
+[package]
+name = "smartschool"
+version = "0.1.0"
+authors = ["Bas De Bue <bas.de.bue@edpnet.be>"]
+edition = "2018"
+
+[dependencies]
+regex = "1.1.6"
+reqwest = "0.9.15"
+
+[dependencies.futures-01]
+package = "futures"
+version = "0.1.23"
+
+[dependencies.futures-preview]
+version = "0.3.0-alpha.14"
+features = ["compat"]
