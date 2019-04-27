@@ -21,7 +21,7 @@
 //! }
 //! ```
 
-#![feature(async_await, await_macro, custom_attribute, futures_api)]
+#![feature(async_await, await_macro, custom_attribute)]
 
 pub mod client;
 pub mod error;
