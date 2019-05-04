@@ -1,5 +1,5 @@
 use crate::error::{Error, Result};
-use futures::compat::Compat01As03;
+use futures::compat::Future01CompatExt;
 use futures_01::stream::Stream;
 use regex::Regex;
 use reqwest::header::{HeaderMap, COOKIE, SET_COOKIE};
@@ -73,13 +73,13 @@ async fn get_session_id_and_token<'a>(
     url: &'a str,
 ) -> Result<(String, String)> {
     let url = format!("{}/login", url);
-    let response = await!(Compat01As03::new(http_client.get(&url).send()))?;
+    let response = await!(http_client.get(&url).send().compat())?;
 
     let session_id = get_session_id_cookie(response.headers())
         .ok_or(Error::Response("Server response did not contain PHPSESSID"))?
         .to_owned();
 
-    let body = await!(Compat01As03::new(response.into_body().concat2()))?;
+    let body = await!(response.into_body().concat2().compat())?;
     let body = std::str::from_utf8(&body)
         .map_err(|_| Error::Response("Server response was not UTF-8-encoded"))?;
 
@@ -130,13 +130,12 @@ async fn post_login_credentials<'a>(
 
     let url = format!("{}/login", url);
     let cookie = format!("PHPSESSID={}", session_id);
-    let response = await!(Compat01As03::new(
-        http_client
-            .post(&url)
-            .header(COOKIE, cookie)
-            .form(&form)
-            .send()
-    ))?;
+    let response = await!(http_client
+        .post(&url)
+        .header(COOKIE, cookie)
+        .form(&form)
+        .send()
+        .compat())?;
 
     // If the response doesn't contain a session ID, the login credentials are most likely invalid.
     let session_id = get_session_id_cookie(response.headers())
