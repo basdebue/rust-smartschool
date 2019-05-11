@@ -1,3 +1,5 @@
+//! A client for interacting with a Smartschool instance.
+
 use crate::error::{Error, Result};
 use futures::compat::Future01CompatExt;
 use futures_01::stream::Stream;
@@ -7,6 +9,7 @@ use reqwest::r#async::Client as HttpClient;
 use reqwest::RedirectPolicy;
 use std::collections::HashMap;
 
+/// A struct containing authentication data and an asynchronous HTTP client.
 #[derive(Clone, Debug)]
 pub struct Client<'a> {
     http_client: HttpClient,
@@ -56,12 +59,14 @@ impl<'a> Client<'a> {
         })
     }
 
-    /// Gets a slice of the current session's ID string.
+    /// Returns the current session's PHPSESSID.
+    ///
+    /// The session ID is generated from the user's login credentials and is the primary authentication method used throughout Smartschool.
     pub fn session_id(&self) -> &str {
-        &self.session_id[..]
+        &self.session_id
     }
 
-    /// Gets a slice of the current session's URL string.
+    /// Returns the URL of the associated Smartschool instance.
     pub fn url(&self) -> &str {
         self.url
     }
@@ -90,7 +95,7 @@ async fn get_session_id_and_token<'a>(
     Ok((session_id, token))
 }
 
-/// Extracts a new PHPSESSID cookie from response headers.
+/// Extracts a PHPSESSID cookie from response headers.
 fn get_session_id_cookie(headers: &HeaderMap) -> Option<&str> {
     let re =
         Regex::new("PHPSESSID=(.+?);").expect("error while creating get_session_id_cookie regex");
@@ -106,7 +111,7 @@ fn get_session_id_cookie(headers: &HeaderMap) -> Option<&str> {
 /// Extracts the login token from a response body.
 fn get_token(body: &str) -> Option<&str> {
     // The token's <input> element happens to be the only one on the page that has two spaces before the `value` attribute.
-    // If you get an error saying the token is missing, this regex probably doesn't work anymore.
+    // If you get an error saying the token is missing, this trick probably doesn't work anymore.
     let re = Regex::new("  value=\"(.+?)\"").expect("error while creating get_token regex");
     if let Some(captures) = re.captures(body) {
         return Some(captures.get(1)?.as_str());

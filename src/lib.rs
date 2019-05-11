@@ -1,9 +1,9 @@
 //! # smartschool
 //!
 //! Smartschool client library for Rust.
-//! 
-//! ## Example 
-//! 
+//!
+//! ## Example
+//!
 //! A quick usage example using [Runtime](https://crates.io/crates/runtime):
 //!
 //! ```
@@ -22,6 +22,7 @@
 //! ```
 
 #![feature(async_await, await_macro, custom_attribute)]
+#![deny(missing_docs)]
 
 pub mod client;
 pub mod error;
