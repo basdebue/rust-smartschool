@@ -29,28 +29,22 @@ impl<'a> Client<'a> {
     ///
     /// Basic usage:
     ///
-    /// ```
-    /// let client = await!(Client::login(
+    /// ```rust
+    /// let client = Client::login(
     ///     "https://myschool.smartschool.be",
     ///     "username",
     ///     "password"
-    /// ))
-    /// .expect("error while logging in");
+    /// ).await?;
     /// ```
     pub async fn login(url: &'a str, username: &'a str, password: &'a str) -> Result<Client<'a>> {
         let http_client = HttpClient::builder()
             .redirect(RedirectPolicy::none())
             .build()?;
 
-        let (session_id, token) = await!(get_session_id_and_token(&http_client, url))?;
-        let session_id = await!(post_login_credentials(
-            &http_client,
-            url,
-            &session_id,
-            username,
-            password,
-            &token
-        ))?;
+        let (session_id, token) = get_session_id_and_token(&http_client, url).await?;
+        let session_id =
+            post_login_credentials(&http_client, url, &session_id, username, password, &token)
+                .await?;
 
         Ok(Client {
             http_client,
@@ -78,13 +72,13 @@ async fn get_session_id_and_token<'a>(
     url: &'a str,
 ) -> Result<(String, String)> {
     let url = format!("{}/login", url);
-    let response = await!(http_client.get(&url).send().compat())?;
+    let response = http_client.get(&url).send().compat().await?;
 
     let session_id = get_session_id_cookie(response.headers())
         .ok_or(Error::Response("Server response did not contain PHPSESSID"))?
         .to_owned();
 
-    let body = await!(response.into_body().concat2().compat())?;
+    let body = response.into_body().concat2().compat().await?;
     let body = std::str::from_utf8(&body)
         .map_err(|_| Error::Response("Server response was not UTF-8-encoded"))?;
 
@@ -135,12 +129,13 @@ async fn post_login_credentials<'a>(
 
     let url = format!("{}/login", url);
     let cookie = format!("PHPSESSID={}", session_id);
-    let response = await!(http_client
+    let response = http_client
         .post(&url)
         .header(COOKIE, cookie)
         .form(&form)
         .send()
-        .compat())?;
+        .compat()
+        .await?;
 
     // If the response doesn't contain a session ID, the login credentials are most likely invalid.
     let session_id = get_session_id_cookie(response.headers())

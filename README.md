@@ -10,16 +10,19 @@ Smartschool client library for Rust.
 A quick usage example using [Runtime](https://crates.io/crates/runtime):
 
 ```rust
+#[feature(async_await)]
+
+use smartschool::error::Result,
 use smartschool::Client;
 
 #[runtime::main(runtime_tokio::Tokio)]
-async fn main() {
-    let client = await!(Client::login(
+async fn main() -> Result<()> {
+    let _client = Client::login(
         "https://myschool.smartschool.be",
         "username",
         "password"
-    ))
-    .expect("error while logging in");
+    ).await?;
+    Ok(())
 }
 ```
 
