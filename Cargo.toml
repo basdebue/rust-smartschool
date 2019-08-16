@@ -2,16 +2,24 @@
 name = "smartschool"
 version = "0.1.0"
 authors = ["Bas De Bue <bas.de.bue@edpnet.be>"]
+categories = ["api-bindings"]
+edition = "2018"
+keywords = ["api", "smartschool"]
 license = "MIT"
 readme = "README.md"
-repository = "https://github.com/basdebue/smartschool"
+repository = "https://github.com/basdebue/rust-smartschool"
 description = "Smartschool client library for Rust."
-categories = ["api-bindings"]
-keywords = ["api", "smartschool"]
-edition = "2018"
 
 [dependencies]
-futures-01 = { version = "0.1.23", package = "futures" }
-futures-preview = { version = "0.3.0-alpha.16", features = ["compat"] }
-regex = "1.1.6"
-reqwest = "0.9.16"
+chrono = { version = "0.4", features = ["serde"], default-features = false }
+futures-preview = { version = "0.3.0-alpha.17", features = ["compat"] }
+hyper = { version = "0.12", default-features = false }
+mime = "0.3"
+mime_serde_shim = "0.2.2"
+regex = "1"
+reqwest = "0.9.19"
+serde = { version = "1", features = ["derive"] }
+uuid = { version = "0.7", features = ["serde"] }
+
+[dev-dependencies]
+tokio = "0.2.0-alpha.1"

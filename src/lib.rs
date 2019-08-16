@@ -1,32 +1,45 @@
-//! # smartschool
-//!
 //! Smartschool client library for Rust.
+//!
+//! This crate is structured according to Smartschool's internal API structure.
+//! Generally, API modules should map to Rust modules and API methods should map
+//! to free-standing asynchronous functions.
 //!
 //! ## Example
 //!
-//! A quick usage example using [Runtime](https://crates.io/crates/runtime):
+//! A simple usage example:
 //!
-//! ```rust
+//! ```ignore
 //! #![feature(async_await)]
 //!
-//! use smartschool::error::Result;
-//! use smartschool::Client;
+//! use smartschool::{error::Result, mydoc, Client};
 //!
-//! #[runtime::main(runtime_tokio::Tokio)]
+//! /// Prints a list of recently modified files.
+//! #[tokio::main]
 //! async fn main() -> Result<()> {
-//!     let _client = Client::login(
-//!         "https://myschool.smartschool.be",
-//!         "username",
-//!         "password"
-//!     ).await?;
+//!     let client = Client::login("https://myschool.smartschool.be", "username", "password").await?;
+//!
+//!     let files = mydoc::get_recent_files(&client).await?;
+//!     if !files.is_empty() {
+//!        for file in files {
+//!             println!("{}", file.name());
+//!         }
+//!     } else {
+//!         println!("No recently modified files...");
+//!     }
+//!
 //!     Ok(())
 //! }
 //! ```
 
 #![feature(async_await, custom_attribute)]
-#![deny(missing_docs)]
+#![warn(missing_docs, rust_2018_idioms)]
+
+pub use client::Client;
+pub use error::Error;
 
 pub mod client;
 pub mod error;
-
-pub use client::Client;
+mod http;
+pub mod mydoc;
+mod serde;
+pub mod upload;
