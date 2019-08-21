@@ -1,36 +1,42 @@
-# rust-smartschool
+# smartschool
 
 [![crates.io](https://img.shields.io/crates/v/smartschool.svg)](https://crates.io/crates/smartschool)
 [![API docs](https://docs.rs/smartschool/badge.svg)](https://docs.rs/smartschool)
 
-Smartschool client library for Rust.
+A Smartschool client library for Rust.
 
 ## Example
 
-A quick usage example using [Runtime](https://crates.io/crates/runtime):
+A simple usage example:
 
 ```rust
 #![feature(async_await)]
 
 use smartschool::{error::Result, mydoc, Client};
 
-#[runtime::main(runtime_tokio::Tokio)]
+/// Prints a list of recently modified files.
+#[tokio::main]
 async fn main() -> Result<()> {
-    // Log in...
     let client = Client::login("https://myschool.smartschool.be", "username", "password").await?;
 
-    // TODO: ...exercise some functionality...
+    let files = mydoc::get_recent_files(&client).await?;
+    if !files.is_empty() {
+        for file in files {
+            println!("{}", file.name());
+        }
+    } else {
+        println!("No recently modified files...");
+    }
 
-    // ...and you're done!
     Ok(())
 }
 ```
 
 ## Scope
 
-This project aims to cover all JSON-based modules of Smartschool's API. XML-based modules, such as Messages, do **not** fall within the scope of the project, since an idiomatic XML abstraction for Rust hasn't been found yet and Smartschool seems to be in the process of transitioning all of its modules to JSON anyway.
+This project aims to cover all JSON-based modules of Smartschool's API. XML-based modules, such as Messages, do **not** fall within the scope of the project, since an idiomatic XML abstraction for Rust has yet to be found and Smartschool seems to be in the process of transitioning all of its modules to JSON anyway.
 
-We are not explicitly targeting Smartschool's internal API; any contributions relating to Smartschool's public API are also welcome!
+We are not explicitly targeting Smartschool's internal API; any contributions relating to its public API are also welcome!
 
 ## Contributing
 
@@ -42,9 +48,7 @@ This project is licensed under the [MIT license](LICENSE).
 
 ### Contribution
 
-Unless you explicitly state otherwise, any contribution intentionally submitted
-for inclusion in `rust-smartschool` by you, shall be licensed as MIT, without any additional
-terms or conditions.
+Unless you explicitly state otherwise, any contribution intentionally submitted for inclusion in `rust-smartschool` by you, shall be licensed as MIT, without any additional terms or conditions.
 
 ## Legal
 
