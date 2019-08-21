@@ -9,8 +9,6 @@
 //! A simple usage example:
 //!
 //! ```ignore
-//! #![feature(async_await)]
-//!
 //! use smartschool::{error::Result, mydoc, Client};
 //!
 //! /// Prints a list of recently modified files.
@@ -31,7 +29,7 @@
 //! }
 //! ```
 
-#![feature(async_await, custom_attribute)]
+#![feature(custom_attribute)]
 #![warn(missing_docs, rust_2018_idioms)]
 
 pub use client::Client;

@@ -10,8 +10,6 @@ A Smartschool client library for Rust.
 A simple usage example:
 
 ```rust
-#![feature(async_await)]
-
 use smartschool::{error::Result, mydoc, Client};
 
 /// Prints a list of recently modified files.

@@ -47,8 +47,6 @@ impl<'a> Client<'a> {
     /// Basic usage:
     ///
     /// ```ignore
-    /// #![feature(async_await)]
-    ///
     /// use smartschool::Client;
     ///
     /// let client = Client::login("https://myschool.smartschool.be", "username", "password").await?;

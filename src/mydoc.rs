@@ -26,8 +26,6 @@ pub use uuid::Uuid;
 /// Changes the color of the first listed favorited folder to yellow.
 ///
 /// ```ignore
-/// #![feature(async_await)]
-///
 /// use smartschool::{
 ///     mydoc::{self, FolderColor, FolderId},
 ///     Client,
@@ -69,8 +67,6 @@ pub async fn change_folder_color(
 /// Copies the first listed favorited file into the root folder.
 ///
 /// ```ignore
-/// #![feature(async_await)]
-///
 /// use smartschool::{
 ///     mydoc::{self, FolderId},
 ///     Client,
@@ -113,8 +109,6 @@ pub async fn copy_file<I: Into<FolderId>>(
 /// Copies the first listed favorited folder into the root folder.
 ///
 /// ```ignore
-/// #![feature(async_await)]
-///
 /// use smartschool::{
 ///     mydoc::{self, FolderId},
 ///     Client,
@@ -158,8 +152,6 @@ pub async fn copy_folder<I: Into<FolderId>>(
 /// Note that the resulting file name is `foo.xlsx`, **not** `foo.xlsx.xlsx`.
 ///
 /// ```ignore
-/// #![feature(async_await)]
-///
 /// use smartschool::{
 ///     mydoc::{self, FolderId, Template},
 ///     Client,
@@ -206,8 +198,6 @@ pub async fn create_file_from_template<I: Into<FolderId>>(
 /// Creates a new folder in the root folder.
 ///
 /// ```ignore
-/// #![feature(async_await)]
-///
 /// use smartschool::{
 ///     mydoc::{self, FolderColor, FolderId},
 ///     Client,
@@ -247,8 +237,6 @@ pub async fn create_folder<I: Into<FolderId>>(
 /// Deletes the first listed file of the root folder.
 ///
 /// ```ignore
-/// #![feature(async_await)]
-///
 /// use smartschool::{
 ///     mydoc::{self, FolderId},
 ///     Client,
@@ -275,8 +263,6 @@ pub async fn delete_file(client: &Client<'_>, id: FileId) -> Result<()> {
 /// Deletes the first listed subfolder of the root folder.
 ///
 /// ```ignore
-/// #![feature(async_await)]
-///
 /// use smartschool::{
 ///     mydoc::{self, FolderId},
 ///     Client,
@@ -304,8 +290,6 @@ pub async fn delete_folder(client: &Client<'_>, id: CustomFolderId) -> Result<()
 /// to a local file.
 ///
 /// ```ignore
-/// #![feature(async_await)]
-///
 /// use futures::{future, stream::TryStreamExt};
 /// use smartschool::{
 ///     mydoc::{self, FolderId},
@@ -346,8 +330,6 @@ pub async fn download_file(
 /// and writes its contents to a local file.
 ///
 /// ```ignore
-/// #![feature(async_await)]
-///
 /// use futures::{future, stream::TryStreamExt};
 /// use smartschool::{
 ///     mydoc::{self, FolderId},
@@ -388,8 +370,6 @@ pub async fn download_revision(
 /// Prints the history of the first listed file of the root folder.
 ///
 /// ```ignore
-/// #![feature(async_await)]
-///
 /// use smartschool::{
 ///     mydoc::{self, FolderId},
 ///     Client,
@@ -415,8 +395,6 @@ pub async fn get_file_history(client: &Client<'_>, id: FileId) -> Result<Vec<His
 /// listed file of the root folder.
 ///
 /// ```ignore
-/// #![feature(async_await)]
-///
 /// use smartschool::{
 ///     mydoc::{self, FolderId},
 ///     Client,
@@ -445,8 +423,6 @@ pub async fn get_file_revisions(client: &Client<'_>, id: FileId) -> Result<Vec<R
 /// Prints a list of files contained in the root folder.
 ///
 /// ```ignore
-/// #![feature(async_await)]
-///
 /// use smartschool::{
 ///     mydoc::{self, FolderId},
 ///     Client,
@@ -480,8 +456,6 @@ pub async fn get_folder_contents<I: Into<FolderId>>(
 /// Prints the history of the first listed subfolder of the root folder.
 ///
 /// ```ignore
-/// #![feature(async_await)]
-///
 /// use smartschool::{
 ///     mydoc::{self, FolderId},
 ///     Client,
@@ -512,8 +486,6 @@ pub async fn get_folder_history(
 /// Creates a new folder tree in the root folder and looks up its path.
 ///
 /// ```ignore
-/// #![feature(async_await)]
-///
 /// use smartschool::{
 ///     mydoc::{self, FolderId},
 ///     Client,
@@ -543,8 +515,6 @@ pub async fn get_folder_parents(
 /// Prints a list of recently modified files.
 ///
 /// ```ignore
-/// #![feature(async_await)]
-///
 /// use smartschool::{
 ///     mydoc::{self, FolderId},
 ///     Client,
@@ -571,8 +541,6 @@ pub async fn get_recent_files(client: &Client<'_>) -> Result<Vec<File>> {
 /// Marks the first listed file of the root folder as favorite.
 ///
 /// ```ignore
-/// #![feature(async_await)]
-///
 /// use smartschool::{
 ///     mydoc::{self, FolderId},
 ///     Client,
@@ -604,8 +572,6 @@ pub async fn mark_file_as_favorite(client: &Client<'_>, id: FileId) -> Result<Fi
 /// Marks the first listed subfolder of the root folder as favorite.
 ///
 /// ```ignore
-/// #![feature(async_await)]
-///
 /// use smartschool::{
 ///     mydoc::{self, FolderId},
 ///     Client,
@@ -645,8 +611,6 @@ pub async fn mark_folder_as_favorite(client: &Client<'_>, id: CustomFolderId) ->
 /// Moves the first listed favorited file into the root folder.
 ///
 /// ```ignore
-/// #![feature(async_await)]
-///
 /// use smartschool::{
 ///     mydoc::{self, FolderId},
 ///     Client,
@@ -693,8 +657,6 @@ pub async fn move_file<I: Into<FolderId>>(
 /// Moves the first listed favorited folder into the root folder.
 ///
 /// ```ignore
-/// #![feature(async_await)]
-///
 /// use smartschool::{
 ///     mydoc::{self, FolderId},
 ///     Client,
@@ -737,8 +699,6 @@ pub async fn move_folder<I: Into<FolderId>>(
 /// Renames the first listed file of the root folder.
 ///
 /// ```ignore
-/// #![feature(async_await)]
-///
 /// use smartschool::{
 ///     mydoc::{self, FolderId},
 ///     Client,
@@ -776,8 +736,6 @@ pub async fn rename_file(client: &Client<'_>, id: FileId, new_name: &str) -> Res
 /// Renames the first listed subfolder of the root folder.
 ///
 /// ```ignore
-/// #![feature(async_await)]
-///
 /// use smartschool::{
 ///     mydoc::{self, FolderId},
 ///     Client,
@@ -826,8 +784,6 @@ pub async fn rename_folder(
 /// Restores the first listed trashed file to the root folder.
 ///
 /// ```ignore
-/// #![feature(async_await)]
-///
 /// use smartschool::{
 ///     mydoc::{self, FolderId, State},
 ///     Client,
@@ -871,8 +827,6 @@ pub async fn restore_file<I: Into<FolderId>>(
 /// Restores the first listed trashed folder to the root folder.
 ///
 /// ```ignore
-/// #![feature(async_await)]
-///
 /// use smartschool::{
 ///     mydoc::{self, FolderId, State},
 ///     Client,
@@ -914,8 +868,6 @@ pub async fn restore_folder<I: Into<FolderId>>(
 /// effectively duplicating the current revision.
 ///
 /// ```ignore
-/// #![feature(async_await)]
-///
 /// use smartschool::{
 ///     mydoc::{self, FolderId, State},
 ///     Client,
@@ -955,8 +907,6 @@ pub async fn restore_revision(
 /// Trashes the first listed file of the root folder.
 ///
 /// ```ignore
-/// #![feature(async_await)]
-///
 /// use smartschool::{
 ///     mydoc::{self, FolderId},
 ///     Client,
@@ -984,8 +934,6 @@ pub async fn trash_file(client: &Client<'_>, id: FileId) -> Result<()> {
 /// Trashes the first listed subfolder of the root folder.
 ///
 /// ```ignore
-/// #![feature(async_await)]
-///
 /// use smartschool::{
 ///     mydoc::{self, FolderId},
 ///     Client,
@@ -1011,8 +959,6 @@ pub async fn trash_folder(client: &Client<'_>, id: CustomFolderId) -> Result<()>
 /// Unmarks the first listed file of the root folder as favorite.
 ///
 /// ```ignore
-/// #![feature(async_await)]
-///
 /// use smartschool::{
 ///     mydoc::{self, FolderId},
 ///     Client,
@@ -1044,8 +990,6 @@ pub async fn unmark_file_as_favorite(client: &Client<'_>, id: FileId) -> Result<
 /// Unmarks the first listed subfolder of the root folder as favorite.
 ///
 /// ```ignore
-/// #![feature(async_await)]
-///
 /// use smartschool::{
 ///     mydoc::{self, FolderId},
 ///     Client,
@@ -1085,8 +1029,6 @@ pub async fn unmark_folder_as_favorite(client: &Client<'_>, id: CustomFolderId) 
 /// Uploads a text file to the root folder.
 ///
 /// ```ignore
-/// #![feature(async_await)]
-///
 /// use smartschool::{
 ///     mydoc::{self, FolderId},
 ///     upload::{self, File},
