@@ -28,8 +28,8 @@ The developers of this project reserve the right to reject any pull request. To 
 
 ### Document your code
 
-  All code must be sufficiently documented, containing at least a short description of its purpose. Implementations of API methods must contain a usage example, and should contain an "Implementation" section when appropriate.
+  All code must be sufficiently documented, containing at least a short description of its purpose. API method implementations must contain a usage example.
 
 ### Format your code
 
-  All code must be formatted with `rustfmt` using default options.
+  All code must be formatted with `rustfmt` using the options defined in [`rustfmt.toml`](rustfmt.toml).
