@@ -32,9 +32,9 @@ async fn main() -> Result<()> {
 
 ## Scope
 
-This project aims to cover all JSON-based modules of Smartschool's API. XML-based modules, such as Messages, do **not** fall within the scope of the project, since an idiomatic XML abstraction for Rust has yet to be found and Smartschool seems to be in the process of transitioning all of its modules to JSON anyway.
+This project aims to provide a usable and idiomatic Rust interface for Smartschool's internal and public APIs.
 
-We are not explicitly targeting Smartschool's internal API; any contributions relating to its public API are also welcome!
+Currently, only certain JSON-based modules of the internal API are implemented. XML-based modules will **not** be implemented, as an idiomatic XML abstraction for Rust has yet to be found and Smartschool seems to be in the process of transitioning all modules to JSON anyway.
 
 ## Contributing
 
