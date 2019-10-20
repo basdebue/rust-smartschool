@@ -1,19 +1,18 @@
 //! A virtual file system hosted on the server.
 
 use crate::{
-    error::{Error, Result},
-    http,
+    error::Result,
+    http::{self, TrySend},
     serde::Json,
     upload::UploadDirectory,
     Client,
 };
+use bytes::Bytes;
 use chrono::{DateTime, FixedOffset};
-use futures::stream::TryStream;
-pub use mime::Mime;
-pub use reqwest::r#async::Chunk;
+use futures::{Stream, TryFutureExt};
 use serde::{Deserialize, Serialize};
 use std::{collections::HashMap, fmt};
-pub use uuid::Uuid;
+use uuid::Uuid;
 
 /// Changes a folder's color and returns the modified folder.
 ///
@@ -46,7 +45,15 @@ pub async fn change_folder_color(
     form.insert("newColor", Json::FolderColor(new_color));
 
     let url = format!("{}/mydoc/api/v1/folders/{}/change-color", client.url(), id);
-    http::post_json_as_json(client.http_client(), &url, &form).await
+    client
+        .http_client()
+        .post(&url)
+        .json(&form)
+        .try_send()
+        .await?
+        .json()
+        .err_into()
+        .await
 }
 
 /// Copies a file into the specified destination folder and returns the newly
@@ -87,7 +94,15 @@ pub async fn copy_file<I: Into<FolderId>>(
     form.insert("parentId", Json::FolderId(destination.into()));
 
     let url = format!("{}/mydoc/api/v1/files/{}/copy", client.url(), source);
-    http::post_json_as_json(client.http_client(), &url, &form).await
+    client
+        .http_client()
+        .post(&url)
+        .json(&form)
+        .try_send()
+        .await?
+        .json()
+        .err_into()
+        .await
 }
 
 /// Copies a folder into the specified destination folder and returns the newly
@@ -129,7 +144,15 @@ pub async fn copy_folder<I: Into<FolderId>>(
     form.insert("parentId", Json::FolderId(destination.into()));
 
     let url = format!("{}/mydoc/api/v1/folders/{}/copy", client.url(), source);
-    http::post_json_as_json(client.http_client(), &url, &form).await
+    client
+        .http_client()
+        .post(&url)
+        .json(&form)
+        .try_send()
+        .await?
+        .json()
+        .err_into()
+        .await
 }
 
 /// Creates a file from a template.
@@ -177,7 +200,15 @@ pub async fn create_file_from_template<I: Into<FolderId>>(
     }
 
     let url = format!("{}/mydoc/api/v1/files/createfromtemplate", client.url());
-    http::post_json_as_json(client.http_client(), &url, &form).await
+    client
+        .http_client()
+        .post(&url)
+        .json(&form)
+        .try_send()
+        .await?
+        .json()
+        .err_into()
+        .await
 }
 
 /// Creates a folder in the specified parent folder and returns the newly
@@ -222,7 +253,15 @@ pub async fn create_folder<I: Into<FolderId>>(
     form.insert("parentId", Json::FolderId(parent_id.into()));
 
     let url = format!("{}/mydoc/api/v1/folders/", client.url());
-    http::post_json_as_json(client.http_client(), &url, &form).await
+    client
+        .http_client()
+        .post(&url)
+        .json(&form)
+        .try_send()
+        .await?
+        .json()
+        .err_into()
+        .await
 }
 
 /// Permanently deletes a file from the virtual file system. If you want to
@@ -248,7 +287,8 @@ pub async fn create_folder<I: Into<FolderId>>(
 /// ```
 pub async fn delete_file(client: &Client<'_>, id: FileId) -> Result<()> {
     let url = format!("{}/mydoc/api/v1/files/{}", client.url(), id);
-    http::delete(client.http_client(), &url).await
+    client.http_client().delete(&url).try_send().await?;
+    Ok(())
 }
 
 /// Permanently deletes a folder from the virtual file system. If you want to
@@ -274,11 +314,12 @@ pub async fn delete_file(client: &Client<'_>, id: FileId) -> Result<()> {
 /// ```
 pub async fn delete_folder(client: &Client<'_>, id: CustomFolderId) -> Result<()> {
     let url = format!("{}/mydoc/api/v1/folders/{}", client.url(), id);
-    http::delete(client.http_client(), &url).await
+    client.http_client().delete(&url).try_send().await?;
+    Ok(())
 }
 
 /// Downloads a file and returns its contents as a non-blocking stream of
-/// [`Chunk`](crate::mydoc::Chunk)s.
+/// [`Bytes`](bytes::Bytes).
 ///
 /// # Errors
 ///
@@ -309,13 +350,14 @@ pub async fn delete_folder(client: &Client<'_>, id: CustomFolderId) -> Result<()
 pub async fn download_file(
     client: &Client<'_>,
     id: FileId,
-) -> Result<impl TryStream<Ok = Chunk, Error = Error>> {
+) -> Result<impl Stream<Item = Result<Bytes>>> {
     let url = format!("{}/mydoc/api/v1/files/{}/download", client.url(), id);
-    http::get_as_stream(client.http_client(), &url).await
+    let response = client.http_client().get(&url).try_send().await?;
+    Ok(http::into_stream(response))
 }
 
 /// Downloads a file at a specific revision and returns its contents as a
-/// non-blocking stream of [`Chunk`](crate::mydoc::Chunk)s.
+/// non-blocking stream of [`Bytes`](bytes::Bytes).
 ///
 /// # Errors
 ///
@@ -351,14 +393,15 @@ pub async fn download_revision(
     client: &Client<'_>,
     file_id: FileId,
     revision_id: RevisionId,
-) -> Result<impl TryStream<Ok = Chunk, Error = Error>> {
+) -> Result<impl Stream<Item = Result<Bytes>>> {
     let url = format!(
         "{}/mydoc/api/v1/files/{}/revisions/{}/download",
         client.url(),
         file_id,
         revision_id
     );
-    http::get_as_stream(client.http_client(), &url).await
+    let response = client.http_client().get(&url).try_send().await?;
+    Ok(http::into_stream(response))
 }
 
 /// Returns a vector of history entries representing the history of a file,
@@ -383,7 +426,14 @@ pub async fn download_revision(
 /// ```
 pub async fn get_file_history(client: &Client<'_>, id: FileId) -> Result<Vec<HistoryEntry>> {
     let url = format!("{}/mydoc/api/v1/files/{}/history", client.url(), id);
-    http::get_as_json(client.http_client(), &url).await
+    client
+        .http_client()
+        .get(&url)
+        .try_send()
+        .await?
+        .json()
+        .err_into()
+        .await
 }
 
 /// Returns a vector of file revisions in arbitrary order.
@@ -409,7 +459,14 @@ pub async fn get_file_history(client: &Client<'_>, id: FileId) -> Result<Vec<His
 /// ```
 pub async fn get_file_revisions(client: &Client<'_>, id: FileId) -> Result<Vec<Revision>> {
     let url = format!("{}/mydoc/api/v1/files/{}/revisions", client.url(), id);
-    http::get_as_json(client.http_client(), &url).await
+    client
+        .http_client()
+        .get(&url)
+        .try_send()
+        .await?
+        .json()
+        .err_into()
+        .await
 }
 
 /// Returns the contents of a folder in arbitrary order.
@@ -443,7 +500,13 @@ pub async fn get_folder_contents<I: Into<FolderId>>(
     } else {
         format!("{}/mydoc/api/v1/directory-listing/{}", client.url(), id)
     };
-    let response: GetFolderContents = http::get_as_json(client.http_client(), &url).await?;
+    let response: GetFolderContents = client
+        .http_client()
+        .get(&url)
+        .try_send()
+        .await?
+        .json()
+        .await?;
     Ok((response.files, response.folders))
 }
 
@@ -472,7 +535,14 @@ pub async fn get_folder_history(
     id: CustomFolderId,
 ) -> Result<Vec<HistoryEntry>> {
     let url = format!("{}/mydoc/api/v1/folders/{}/history", client.url(), id);
-    http::get_as_json(client.http_client(), &url).await
+    client
+        .http_client()
+        .get(&url)
+        .try_send()
+        .await?
+        .json()
+        .err_into()
+        .await
 }
 
 /// Returns the folder's path represented as a vector of breadcrumbs.
@@ -504,7 +574,14 @@ pub async fn get_folder_parents(
     id: CustomFolderId,
 ) -> Result<Vec<CustomFolderId>> {
     let url = format!("{}/mydoc/api/v1/folders/{}/parents", client.url(), id);
-    http::get_as_json(client.http_client(), &url).await
+    client
+        .http_client()
+        .get(&url)
+        .try_send()
+        .await?
+        .json()
+        .err_into()
+        .await
 }
 
 /// Returns a vector of recently modified files, sorted by modification date in
@@ -527,7 +604,14 @@ pub async fn get_folder_parents(
 /// ```
 pub async fn get_recent_files(client: &Client<'_>) -> Result<Vec<File>> {
     let url = format!("{}/mydoc/api/v1/files/recent", client.url());
-    http::get_as_json(client.http_client(), &url).await
+    client
+        .http_client()
+        .get(&url)
+        .try_send()
+        .await?
+        .json()
+        .err_into()
+        .await
 }
 
 /// Marks a file as favorite and returns the modified file.
@@ -558,7 +642,14 @@ pub async fn mark_file_as_favorite(client: &Client<'_>, id: FileId) -> Result<Fi
         client.url(),
         id
     );
-    http::post_as_json(client.http_client(), &url).await
+    client
+        .http_client()
+        .post(&url)
+        .try_send()
+        .await?
+        .json()
+        .err_into()
+        .await
 }
 
 /// Marks a folder as favorite and returns the modified folder.
@@ -589,7 +680,14 @@ pub async fn mark_folder_as_favorite(client: &Client<'_>, id: CustomFolderId) ->
         client.url(),
         id
     );
-    http::post_as_json(client.http_client(), &url).await
+    client
+        .http_client()
+        .post(&url)
+        .try_send()
+        .await?
+        .json()
+        .err_into()
+        .await
 }
 
 /// Moves a file into the specified destination folder and returns the moved
@@ -634,7 +732,15 @@ pub async fn move_file<I: Into<FolderId>>(
     form.insert("parentId", Json::FolderId(destination.into()));
 
     let url = format!("{}/mydoc/api/v1/files/{}/move", client.url(), source);
-    http::post_json_as_json(client.http_client(), &url, &form).await
+    client
+        .http_client()
+        .post(&url)
+        .json(&form)
+        .try_send()
+        .await?
+        .json()
+        .err_into()
+        .await
 }
 
 /// Moves a folder into the specified destination folder and returns the moved
@@ -680,7 +786,15 @@ pub async fn move_folder<I: Into<FolderId>>(
     form.insert("parentId", Json::FolderId(destination.into()));
 
     let url = format!("{}/mydoc/api/v1/folders/{}/move", client.url(), source);
-    http::post_json_as_json(client.http_client(), &url, &form).await
+    client
+        .http_client()
+        .post(&url)
+        .json(&form)
+        .try_send()
+        .await?
+        .json()
+        .err_into()
+        .await
 }
 
 /// Changes a file's name and returns the modified file.
@@ -718,7 +832,15 @@ pub async fn rename_file(client: &Client<'_>, id: FileId, new_name: &str) -> Res
     form.insert("newName", Json::Str(new_name));
 
     let url = format!("{}/mydoc/api/v1/files/{}/rename", client.url(), id);
-    http::post_json_as_json(client.http_client(), &url, &form).await
+    client
+        .http_client()
+        .post(&url)
+        .json(&form)
+        .try_send()
+        .await?
+        .json()
+        .err_into()
+        .await
 }
 
 /// Changes a folder's name and returns the modified folder.
@@ -759,7 +881,15 @@ pub async fn rename_folder(
     form.insert("newName", Json::Str(new_name));
 
     let url = format!("{}/mydoc/api/v1/folders/{}/rename", client.url(), id);
-    http::post_json_as_json(client.http_client(), &url, &form).await
+    client
+        .http_client()
+        .post(&url)
+        .json(&form)
+        .try_send()
+        .await?
+        .json()
+        .err_into()
+        .await
 }
 
 /// Restores a trashed file to an active folder and returns the restored file.
@@ -804,7 +934,15 @@ pub async fn restore_file<I: Into<FolderId>>(
     form.insert("parentId", Json::FolderId(destination.into()));
 
     let url = format!("{}/mydoc/api/v1/files/{}/restore", client.url(), id);
-    http::post_json_as_json(client.http_client(), &url, &form).await
+    client
+        .http_client()
+        .post(&url)
+        .json(&form)
+        .try_send()
+        .await?
+        .json()
+        .err_into()
+        .await
 }
 
 /// Restores a trashed folder to an active folder and returns the restored
@@ -847,7 +985,15 @@ pub async fn restore_folder<I: Into<FolderId>>(
     form.insert("parentId", Json::FolderId(destination.into()));
 
     let url = format!("{}/mydoc/api/v1/folders/{}/restore", client.url(), id);
-    http::post_json_as_json(client.http_client(), &url, &form).await
+    client
+        .http_client()
+        .post(&url)
+        .json(&form)
+        .try_send()
+        .await?
+        .json()
+        .err_into()
+        .await
 }
 
 /// Restores a file to the specified revision and returns the new revision.
@@ -891,7 +1037,14 @@ pub async fn restore_revision(
         file_id,
         revision_id
     );
-    http::post_as_json(client.http_client(), &url).await
+    client
+        .http_client()
+        .post(&url)
+        .try_send()
+        .await?
+        .json()
+        .err_into()
+        .await
 }
 
 /// Moves a file to the [`Trashed`](crate::mydoc::FolderId::Trashed) folder.
@@ -918,7 +1071,8 @@ pub async fn restore_revision(
 /// ```
 pub async fn trash_file(client: &Client<'_>, id: FileId) -> Result<()> {
     let url = format!("{}/mydoc/api/v1/files/{}/trash", client.url(), id);
-    http::post(client.http_client(), &url).await
+    client.http_client().post(&url).try_send().await?;
+    Ok(())
 }
 
 /// Moves a folder into the [`Trashed`](crate::mydoc::FolderId::Trashed) folder.
@@ -945,7 +1099,8 @@ pub async fn trash_file(client: &Client<'_>, id: FileId) -> Result<()> {
 /// ```
 pub async fn trash_folder(client: &Client<'_>, id: CustomFolderId) -> Result<()> {
     let url = format!("{}/mydoc/api/v1/folders/{}/trash", client.url(), id);
-    http::post(client.http_client(), &url).await
+    client.http_client().post(&url).try_send().await?;
+    Ok(())
 }
 
 /// Unmarks a file as favorite and returns the modified file.
@@ -976,7 +1131,14 @@ pub async fn unmark_file_as_favorite(client: &Client<'_>, id: FileId) -> Result<
         client.url(),
         id,
     );
-    http::post_as_json(client.http_client(), &url).await
+    client
+        .http_client()
+        .post(&url)
+        .try_send()
+        .await?
+        .json()
+        .err_into()
+        .await
 }
 
 /// Unmarks a folder as favorite and returns the modified folder.
@@ -1007,7 +1169,14 @@ pub async fn unmark_folder_as_favorite(client: &Client<'_>, id: CustomFolderId) 
         client.url(),
         id,
     );
-    http::post_as_json(client.http_client(), &url).await
+    client
+        .http_client()
+        .post(&url)
+        .try_send()
+        .await?
+        .json()
+        .err_into()
+        .await
 }
 
 /// Uploads the contents of an
@@ -1058,7 +1227,14 @@ pub async fn upload<I: Into<FolderId>>(
 
     // The server response also contains an `exceptions` field, but this seems to
     // always be empty.
-    let response: Upload = http::post_json_as_json(client.http_client(), &url, &form).await?;
+    let response: Upload = client
+        .http_client()
+        .post(&url)
+        .json(&form)
+        .try_send()
+        .await?
+        .json()
+        .await?;
 
     // The `files` field of the response is actually a map where the key is the
     // file's identifier and the value is the file itself. Since the files
@@ -1480,8 +1656,6 @@ pub struct Revision {
     #[serde(rename = "label")]
     file_name: String,
     file_size: u64,
-    #[serde(rename = "mimeType", with = "mime_serde_shim")]
-    file_type: Mime,
     id: RevisionId,
 }
 
@@ -1504,11 +1678,6 @@ impl Revision {
     /// Returns the size of the associated file in bytes.
     pub fn file_size(&self) -> u64 {
         self.file_size
-    }
-
-    /// Returns the MIME type of the associated file.
-    pub fn file_type(&self) -> &Mime {
-        &self.file_type
     }
 
     /// Returns the revision's identifier.
@@ -1564,7 +1733,7 @@ pub enum Template<'a> {
     /// The default template for spreadsheets.
     Excel,
     /// The default template for presentations.
-    Powerpoint,
+    PowerPoint,
     /// The default template for documents.
     Word,
 }
@@ -1574,7 +1743,7 @@ impl<'a> Template<'a> {
         match self {
             Template::Custom(_) => "template",
             Template::Excel => "excel",
-            Template::Powerpoint => "powerpoint",
+            Template::PowerPoint => "powerpoint",
             Template::Word => "word",
         }
     }

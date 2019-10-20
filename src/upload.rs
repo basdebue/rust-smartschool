@@ -1,9 +1,12 @@
 //! File uploads for use around the platform.
 
-use crate::{error::Result, http, Client};
-use futures::stream::{TryStream, TryStreamExt};
-pub use hyper::Chunk as UploadChunk;
-use reqwest::r#async::multipart::{Form, Part};
+use crate::{error::Result, http::TrySend, Client};
+use bytes::Bytes;
+use futures::{TryStream, TryStreamExt};
+use reqwest::{
+    multipart::{Form, Part},
+    Body,
+};
 use serde::{Deserialize, Serialize};
 use std::{borrow::Cow, error::Error};
 
@@ -17,7 +20,13 @@ use std::{borrow::Cow, error::Error};
 /// See [`mydoc::upload`](crate::mydoc::upload).
 pub async fn get_upload_directory(client: &Client<'_>) -> Result<UploadDirectory> {
     let url = format!("{}/upload/api/v1/get-upload-directory", client.url());
-    let response: GetUploadDirectory = http::get_as_json(client.http_client(), &url).await?;
+    let response: GetUploadDirectory = client
+        .http_client()
+        .get(&url)
+        .try_send()
+        .await?
+        .json()
+        .await?;
     Ok(response.upload_dir)
 }
 
@@ -49,7 +58,13 @@ pub async fn upload_file(
         .part("file", file.inner);
 
     let url = format!("{}/Upload/Upload/Index", client.url());
-    http::post_multipart(client.http_client(), &url, form).await
+    client
+        .http_client()
+        .post(&url)
+        .multipart(form)
+        .try_send()
+        .await?;
+    Ok(())
 }
 
 /// A file that can be uploaded.
@@ -69,14 +84,14 @@ impl File {
     }
 
     /// Creates a [`FileBuilder`](crate::upload::FileBuilder) from an
-    /// asynchronous stream of [`UploadChunk`](crate::upload::UploadChunk)s.
-    pub fn from_stream<T>(stream: T) -> FileBuilder
+    /// asynchronous stream of [`Bytes`](crate::upload::Bytes).
+    pub fn from_stream<S>(stream: S) -> FileBuilder
     where
-        T: TryStream + Send + Unpin + 'static,
-        T::Error: Error + Send + Sync,
-        UploadChunk: From<T::Ok>,
+        S: TryStream + Send + Sync + 'static,
+        S::Error: Into<Box<dyn Error + Send + Sync>>,
+        Bytes: From<S::Ok>,
     {
-        let inner = Part::stream(stream.compat());
+        let inner = Part::stream(Body::wrap_stream(stream.map_ok(Bytes::from)));
         FileBuilder { inner }
     }
 

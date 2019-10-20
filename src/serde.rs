@@ -53,6 +53,8 @@ impl Serialize for FolderId {
     }
 }
 
+/// An enum representing the types that can be serialized as JSON.
+#[derive(Debug)]
 pub enum Json<'a> {
     FolderColor(FolderColor),
     FolderId(FolderId),

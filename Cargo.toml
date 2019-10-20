@@ -11,15 +11,13 @@ repository = "https://github.com/basdebue/rust-smartschool"
 description = "Smartschool client library for Rust."
 
 [dependencies]
+bytes = "0.4"
 chrono = { version = "0.4", features = ["serde"], default-features = false }
-futures-preview = { version = "0.3.0-alpha.17", features = ["compat"] }
-hyper = { version = "0.12", default-features = false }
-mime = "0.3"
-mime_serde_shim = "0.2.2"
+futures-preview = { version = "0.3.0-alpha.19" }
 regex = "1"
-reqwest = "0.9.19"
+reqwest = { version = "0.10.0-alpha.1", features = ["cookies", "json", "unstable-stream"] }
 serde = { version = "1", features = ["derive"] }
-uuid = { version = "0.7", features = ["serde"] }
+uuid = { version = "0.8", features = ["serde"] }
 
 [dev-dependencies]
-tokio = "0.2.0-alpha.1"
+tokio = "0.2.0-alpha.6"

@@ -2,10 +2,10 @@
 
 use crate::{
     error::{Error, Result},
-    http,
+    http::TrySend,
 };
 use regex::Regex;
-use reqwest::{r#async::Client as HttpClient, RedirectPolicy};
+use reqwest::{Client as HttpClient, RedirectPolicy};
 use std::collections::HashMap;
 
 /// Extracts the login token from a response body.
@@ -20,7 +20,7 @@ fn get_token(body: &str) -> Option<&str> {
         .map(|capture| capture.as_str())
 }
 
-/// A struct containing authentication data and an asynchronous HTTP client.
+/// An asynchronous client for interacting with a Smartschool instance.
 #[derive(Clone, Debug)]
 pub struct Client<'a> {
     http_client: HttpClient,
@@ -28,11 +28,6 @@ pub struct Client<'a> {
 }
 
 impl<'a> Client<'a> {
-    /// Gets an immutable reference to the underlying asynchronous HTTP client.
-    pub fn http_client(&self) -> &HttpClient {
-        &self.http_client
-    }
-
     /// Logs in with the provided login credentials and returns a client.
     ///
     /// # Errors
@@ -53,7 +48,7 @@ impl<'a> Client<'a> {
     ///
     /// assert_eq!("https://myschool.smartschool.be", client.url());
     /// ```
-    pub async fn login(url: &'a str, username: &'a str, password: &'a str) -> Result<Client<'a>> {
+    pub async fn login(url: &'a str, username: &str, password: &str) -> Result<Client<'a>> {
         let http_client = HttpClient::builder()
             .cookie_store(true)
             .redirect(RedirectPolicy::none())
@@ -61,15 +56,23 @@ impl<'a> Client<'a> {
             .build()?;
 
         let request_url = format!("{}/login", url);
-        let response = http::get_as_text(&http_client, &request_url).await?;
+        let response = http_client
+            .get(&request_url)
+            .try_send()
+            .await?
+            .text()
+            .await?;
         let token = get_token(&response).ok_or(Error::Authentication)?;
 
         let mut form = HashMap::new();
         form.insert("login_form[_password]", password);
         form.insert("login_form[_token]", token);
         form.insert("login_form[_username]", username);
-        let request = http_client.post(&request_url).form(&form);
-        let response = http::send(request).await?;
+        let response = http_client
+            .post(&request_url)
+            .form(&form)
+            .try_send()
+            .await?;
 
         let successful = response
             .cookies()
@@ -80,6 +83,11 @@ impl<'a> Client<'a> {
         } else {
             Err(Error::Authentication)
         }
+    }
+
+    /// Gets an immutable reference to the underlying asynchronous HTTP client.
+    pub(crate) fn http_client(&self) -> &HttpClient {
+        &self.http_client
     }
 
     /// Returns the URL of the associated Smartschool instance.

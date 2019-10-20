@@ -29,7 +29,7 @@
 //! }
 //! ```
 
-#![feature(custom_attribute)]
+#![feature(async_closure, custom_attribute)]
 #![warn(missing_docs, rust_2018_idioms)]
 
 pub use client::Client;
