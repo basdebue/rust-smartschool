@@ -14,10 +14,6 @@ use std::{borrow::Cow, error::Error};
 ///
 /// The returned [`UploadDirectory`](crate::upload::UploadDirectory) is a
 /// randomized hexadecimal string containing 30 characters.
-///
-/// # Examples
-///
-/// See [`mydoc::upload`](crate::mydoc::upload).
 pub async fn get_upload_directory(client: &Client<'_>) -> Result<UploadDirectory> {
     let url = format!("{}/upload/api/v1/get-upload-directory", client.url());
     let response: GetUploadDirectory = client
@@ -44,10 +40,6 @@ pub async fn get_upload_directory(client: &Client<'_>) -> Result<UploadDirectory
 ///
 /// Returns an error if the file name contains a `:` or starts or ends with a
 /// `.`.
-///
-/// # Examples
-///
-/// See [`mydoc::upload`](crate::mydoc::upload).
 pub async fn upload_file(
     client: &Client<'_>,
     upload_dir: UploadDirectory,
@@ -84,7 +76,7 @@ impl File {
     }
 
     /// Creates a [`FileBuilder`](crate::upload::FileBuilder) from an
-    /// asynchronous stream of [`Bytes`](crate::upload::Bytes).
+    /// asynchronous stream of [`Bytes`](bytes::Bytes).
     pub fn from_stream<S>(stream: S) -> FileBuilder
     where
         S: TryStream + Send + Sync + 'static,

@@ -19,23 +19,6 @@ use uuid::Uuid;
 /// # Errors
 ///
 /// Returns an error if the folder doesn't exist.
-///
-/// # Examples
-///
-/// Changes the color of the first listed favorited folder to yellow.
-///
-/// ```ignore
-/// use smartschool::{
-///     mydoc::{self, FolderColor, FolderId},
-///     Client,
-/// };
-///
-/// let client = Client::login("https://myschool.smartschool.be", "username", "password").await?;
-/// let (_, folders) = mydoc::get_folder_contents(&client, FolderId::Favorites).await?;
-/// let folder = mydoc::change_folder_color(&client, folders[0].id(), FolderColor::Yellow).await?;
-///
-/// assert_eq!(folder.color(), FolderColor::Yellow);
-/// ```
 pub async fn change_folder_color(
     client: &Client<'_>,
     id: CustomFolderId,
@@ -68,23 +51,6 @@ pub async fn change_folder_color(
 ///   [`FolderId::Favorites`](crate::mydoc::FolderId::Favorites) or
 ///   [`FolderId::Trashed`](crate::mydoc::FolderId::Trashed).
 /// * The destination folder doesn't exist.
-///
-/// # Examples
-///
-/// Copies the first listed favorited file into the root folder.
-///
-/// ```ignore
-/// use smartschool::{
-///     mydoc::{self, FolderId},
-///     Client,
-/// };
-///
-/// let client = Client::login("https://myschool.smartschool.be", "username", "password").await?;
-/// let (files, _) = mydoc::get_folder_contents(&client, FolderId::Favorites).await?;
-/// let file = mydoc::copy_file(&client, files[0].id(), FolderId::Root).await?;
-///
-/// assert_eq!(file.parent_id(), FolderId::Root);
-/// ```
 pub async fn copy_file<I: Into<FolderId>>(
     client: &Client<'_>,
     source: FileId,
@@ -118,23 +84,6 @@ pub async fn copy_file<I: Into<FolderId>>(
 ///   [`FolderId::Trashed`](crate::mydoc::FolderId::Trashed).
 /// * The destination folder doesn't exist.
 /// * The destination folder is the source folder itself.
-///
-/// # Examples
-///
-/// Copies the first listed favorited folder into the root folder.
-///
-/// ```ignore
-/// use smartschool::{
-///     mydoc::{self, FolderId},
-///     Client,
-/// };
-///
-/// let client = Client::login("https://myschool.smartschool.be", "username", "password").await?;
-/// let (_, folders) = mydoc::get_folder_contents(&client, FolderId::Favorites).await?;
-/// let folder = mydoc::copy_folder(&client, folders[0].id(), FolderId::Root).await?;
-///
-/// assert_eq!(folder.parent_id(), FolderId::Root);
-/// ```
 pub async fn copy_folder<I: Into<FolderId>>(
     client: &Client<'_>,
     source: CustomFolderId,
@@ -168,23 +117,6 @@ pub async fn copy_folder<I: Into<FolderId>>(
 /// * The file name contains an [illegal character](crate::mydoc::rename_file)
 ///   or starts with a `.`.
 /// * The template doesn't exist.
-///
-/// # Examples
-///
-/// Creates an empty spreadsheet in the root folder.
-/// Note that the resulting file name is `foo.xlsx`, **not** `foo.xlsx.xlsx`.
-///
-/// ```ignore
-/// use smartschool::{
-///     mydoc::{self, FolderId, Template},
-///     Client,
-/// };
-///
-/// let client = Client::login("https://myschool.smartschool.be", "username", "password").await?;
-/// let file = mydoc::create_file_from_template(&client, FolderId::Root, Template::Excel, "foo.xlsx").await?;
-///
-/// assert_eq!(file.name(), "foo.xlsx");
-/// ```
 pub async fn create_file_from_template<I: Into<FolderId>>(
     client: &Client<'_>,
     parent_id: I,
@@ -223,24 +155,6 @@ pub async fn create_file_from_template<I: Into<FolderId>>(
 ///
 /// * The parent folder doesn't exist.
 /// * The folder name is [illegal](crate::mydoc::rename_file).
-///
-/// # Examples
-///
-/// Creates a new folder in the root folder.
-///
-/// ```ignore
-/// use smartschool::{
-///     mydoc::{self, FolderColor, FolderId},
-///     Client,
-/// };
-///
-/// let client = Client::login("https://myschool.smartschool.be", "username", "password").await?;
-/// let folder = mydoc::create_folder(&client, FolderId::Root, "test", FolderColor::Yellow).await?;
-///
-/// assert_eq!(folder.color(), FolderColor::Yellow);
-/// assert_eq!(folder.name(), "test");
-/// assert_eq!(folder.parent_folder(), FolderId::Root);
-/// ```
 pub async fn create_folder<I: Into<FolderId>>(
     client: &Client<'_>,
     parent_id: I,
@@ -270,21 +184,6 @@ pub async fn create_folder<I: Into<FolderId>>(
 /// # Errors
 ///
 /// Returns an error if the file doesn't exist.
-///
-/// # Examples
-///
-/// Deletes the first listed file of the root folder.
-///
-/// ```ignore
-/// use smartschool::{
-///     mydoc::{self, FolderId},
-///     Client,
-/// };
-///
-/// let client = Client::login("https://myschool.smartschool.be", "username", "password").await?;
-/// let (files, _) = mydoc::get_folder_contents(&client, FolderId::Root).await?;
-/// mydoc::delete_file(&client, files[0].id()).await?;
-/// ```
 pub async fn delete_file(client: &Client<'_>, id: FileId) -> Result<()> {
     let url = format!("{}/mydoc/api/v1/files/{}", client.url(), id);
     client.http_client().delete(&url).try_send().await?;
@@ -297,21 +196,6 @@ pub async fn delete_file(client: &Client<'_>, id: FileId) -> Result<()> {
 /// # Errors
 ///
 /// Returns an error if the folder doesn't exist.
-///
-/// # Examples
-///
-/// Deletes the first listed subfolder of the root folder.
-///
-/// ```ignore
-/// use smartschool::{
-///     mydoc::{self, FolderId},
-///     Client,
-/// };
-///
-/// let client = Client::login("https://myschool.smartschool.be", "username", "password").await?;
-/// let (_, folders) = mydoc::get_folder_contents(&client, FolderId::Root).await?;
-/// mydoc::delete_folder(&client, folders[0].id()).await?;
-/// ```
 pub async fn delete_folder(client: &Client<'_>, id: CustomFolderId) -> Result<()> {
     let url = format!("{}/mydoc/api/v1/folders/{}", client.url(), id);
     client.http_client().delete(&url).try_send().await?;
@@ -324,29 +208,6 @@ pub async fn delete_folder(client: &Client<'_>, id: CustomFolderId) -> Result<()
 /// # Errors
 ///
 /// Returns an error if the file doesn't exist.
-///
-/// # Examples
-///
-/// Downloads the first listed file of the root folder and writes its contents
-/// to a local file.
-///
-/// ```ignore
-/// use futures::{future, stream::TryStreamExt};
-/// use smartschool::{
-///     mydoc::{self, FolderId},
-///     Client,
-/// };
-/// use std::{fs::File, io::Write};
-///
-/// let client = Client::login("https://myschool.smartschool.be", "username", "password").await?;
-/// let (files, _) = mydoc::get_folder_contents(&client, FolderId::Root);
-///
-/// let file = File::create("foo")?;
-/// mydoc::download_file(&client, files[0].id())
-///     .await?
-///     .try_for_each(|chunk| future::ready(file.write_all(&chunk)))
-///     .await?;
-/// ```
 pub async fn download_file(
     client: &Client<'_>,
     id: FileId,
@@ -365,30 +226,6 @@ pub async fn download_file(
 ///
 /// * The file doesn't exist.
 /// * The revision doesn't exist or isn't associated with the file.
-///
-/// # Examples
-///
-/// Downloads the current revision of the first listed file of the root folder
-/// and writes its contents to a local file.
-///
-/// ```ignore
-/// use futures::{future, stream::TryStreamExt};
-/// use smartschool::{
-///     mydoc::{self, FolderId},
-///     Client,
-/// };
-/// use std::{fs::File, io::Write};
-///
-/// let client = Client::login("https://myschool.smartschool.be", "username", "password").await?;
-/// let (files, _) = mydoc::get_folder_contents(&client, FolderId::Root);
-///
-/// let smsc_file = files[0];
-/// let std_file = File::create("foo")?;
-/// mydoc::download_revision(&client, smsc_file.id(), smsc_file.current_revision().id())
-///     .await?
-///     .try_for_each(|chunk| future::ready(file.write_all(&chunk)))
-///     .await?;
-/// ```
 pub async fn download_revision(
     client: &Client<'_>,
     file_id: FileId,
@@ -407,23 +244,6 @@ pub async fn download_revision(
 /// Returns a vector of history entries representing the history of a file,
 /// sorted by date in descending order. Nonexistent files produce an empty
 /// vector.
-///
-/// # Examples
-///
-/// Prints the history of the first listed file of the root folder.
-///
-/// ```ignore
-/// use smartschool::{
-///     mydoc::{self, FolderId},
-///     Client,
-/// };
-///
-/// let client = Client::login("https://myschool.smartschool.be", "username", "password").await?;
-/// let (files, _) = mydoc::get_folder_contents(&client, FolderId::Root).await?;
-/// let history = mydoc::get_file_history(&client, files[0].id()).await?;
-///
-/// println!("{:?}", history);
-/// ```
 pub async fn get_file_history(client: &Client<'_>, id: FileId) -> Result<Vec<HistoryEntry>> {
     let url = format!("{}/mydoc/api/v1/files/{}/history", client.url(), id);
     client
@@ -436,27 +256,8 @@ pub async fn get_file_history(client: &Client<'_>, id: FileId) -> Result<Vec<His
         .await
 }
 
-/// Returns a vector of file revisions in arbitrary order.
-/// Nonexistent files produce an empty vector.
-///
-/// # Examples
-///
-/// Prints a list of revisions, sorted by date in ascending order, of the first
-/// listed file of the root folder.
-///
-/// ```ignore
-/// use smartschool::{
-///     mydoc::{self, FolderId},
-///     Client,
-/// };
-///
-/// let client = Client::login("https://myschool.smartschool.be", "username", "password").await?;
-/// let (files, _) = mydoc::get_folder_contents(&client, FolderId::Root).await?;
-/// let mut revisions = mydoc::get_file_revisions(&client, files[0].id()).await?;
-///
-/// revisions.sort_by(|one, two| Ord::cmp(one.date_created(), two.date_created());
-/// println!("{:?}", revisions);
-/// ```
+/// Returns a vector of file revisions in arbitrary order. Nonexistent files
+/// produce an empty vector.
 pub async fn get_file_revisions(client: &Client<'_>, id: FileId) -> Result<Vec<Revision>> {
     let url = format!("{}/mydoc/api/v1/files/{}/revisions", client.url(), id);
     client
@@ -474,22 +275,6 @@ pub async fn get_file_revisions(client: &Client<'_>, id: FileId) -> Result<Vec<R
 /// # Errors
 ///
 /// Returns an error if the folder doesn't exist.
-///
-/// # Examples
-///
-/// Prints a list of files contained in the root folder.
-///
-/// ```ignore
-/// use smartschool::{
-///     mydoc::{self, FolderId},
-///     Client,
-/// };
-///
-/// let client = Client::login("https://myschool.smartschool.be", "username", "password").await?;
-/// let (files, _) = mydoc::get_folder_contents(&client, FolderId::Root).await?;
-///
-/// println!("{:?}", files);
-/// ```
 pub async fn get_folder_contents<I: Into<FolderId>>(
     client: &Client<'_>,
     id: I,
@@ -513,23 +298,6 @@ pub async fn get_folder_contents<I: Into<FolderId>>(
 /// Returns a vector of history entries representing the history of a folder,
 /// sorted by date in descending order. Nonexistent folders produce an empty
 /// vector.
-///
-/// # Examples
-///
-/// Prints the history of the first listed subfolder of the root folder.
-///
-/// ```ignore
-/// use smartschool::{
-///     mydoc::{self, FolderId},
-///     Client,
-/// };
-///
-/// let client = Client::login("https://myschool.smartschool.be", "username", "password").await?;
-/// let (_, folders) = mydoc::get_folder_contents(&client, FolderId::Root).await?;
-/// let history = mydoc::get_folder_history(&client, folders[0].id()).await?;
-///
-/// println!("{:?}", history);
-/// ```
 pub async fn get_folder_history(
     client: &Client<'_>,
     id: CustomFolderId,
@@ -545,30 +313,12 @@ pub async fn get_folder_history(
         .await
 }
 
-/// Returns the folder's path represented as a vector of breadcrumbs.
+/// Returns the folder's path represented as breadcrumbs, consisting of a vector
+/// of folder identifiers.
 ///
 /// # Errors
 ///
 /// Returns an error if the folder doesn't exist.
-///
-/// # Examples
-///
-/// Creates a new folder tree in the root folder and looks up its path.
-///
-/// ```ignore
-/// use smartschool::{
-///     mydoc::{self, FolderId},
-///     Client,
-/// };
-///
-/// let client = Client::login("https://myschool.smartschool.be", "username", "password").await?;
-/// let folder_1 = mydoc::create_folder(&client, FolderId::Root, "foo").await?;
-/// let folder_2 = mydoc::create_folder(&client, FolderId::Custom(folder_1.id()), "bar").await?;
-/// let folder_3 = mydoc::create_folder(&client, FolderId::Custom(folder_2.id()), "baz").await?;
-/// let parents = mydoc::get_folder_parents(&client, folder_3.id()).await?;
-///
-/// assert_eq!(&parents, &[folder_1.id(), folder_2.id()]);
-/// ```
 pub async fn get_folder_parents(
     client: &Client<'_>,
     id: CustomFolderId,
@@ -586,22 +336,6 @@ pub async fn get_folder_parents(
 
 /// Returns a vector of recently modified files, sorted by modification date in
 /// descending order.
-///
-/// # Examples
-///
-/// Prints a list of recently modified files.
-///
-/// ```ignore
-/// use smartschool::{
-///     mydoc::{self, FolderId},
-///     Client,
-/// };
-///
-/// let client = Client::login("https://myschool.smartschool.be", "username", "password").await?;
-/// let files = mydoc::get_recent_files(&client).await?;
-///
-/// println!("{:?}", files);
-/// ```
 pub async fn get_recent_files(client: &Client<'_>) -> Result<Vec<File>> {
     let url = format!("{}/mydoc/api/v1/files/recent", client.url());
     client
@@ -619,23 +353,6 @@ pub async fn get_recent_files(client: &Client<'_>) -> Result<Vec<File>> {
 /// # Errors
 ///
 /// Returns an error if the file doesn't exist.
-///
-/// # Examples
-///
-/// Marks the first listed file of the root folder as favorite.
-///
-/// ```ignore
-/// use smartschool::{
-///     mydoc::{self, FolderId},
-///     Client,
-/// };
-///
-/// let client = Client::login("https://myschool.smartschool.be", "username", "password").await?;
-/// let (files, _) = mydoc::get_folder_contents(&client, FolderId::Root).await?;
-/// let file = mydoc::mark_file_as_favorite(&client, files[0].id()).await?;
-///
-/// assert_eq!(true, file.is_favorite());
-/// ```
 pub async fn mark_file_as_favorite(client: &Client<'_>, id: FileId) -> Result<File> {
     let url = format!(
         "{}/mydoc/api/v1/files/{}/mark-as-favourite",
@@ -657,23 +374,6 @@ pub async fn mark_file_as_favorite(client: &Client<'_>, id: FileId) -> Result<Fi
 /// # Errors
 ///
 /// Returns an error if the folder doesn't exist.
-///
-/// # Examples
-///
-/// Marks the first listed subfolder of the root folder as favorite.
-///
-/// ```ignore
-/// use smartschool::{
-///     mydoc::{self, FolderId},
-///     Client,
-/// };
-///
-/// let client = Client::login("https://myschool.smartschool.be", "username", "password").await?;
-/// let (_, folders) = mydoc::get_folder_contents(&client, FolderId::Root).await?;
-/// let folder = mydoc::mark_folder_as_favorite(&client, folders[0].id()).await?;
-///
-/// assert_eq!(true, folder.is_favorite());
-/// ```
 pub async fn mark_folder_as_favorite(client: &Client<'_>, id: CustomFolderId) -> Result<Folder> {
     let url = format!(
         "{}/mydoc/api/v1/folders/{}/mark-as-favourite",
@@ -703,26 +403,6 @@ pub async fn mark_folder_as_favorite(client: &Client<'_>, id: CustomFolderId) ->
 ///   [`FolderId::Trashed`](crate::mydoc::FolderId::Trashed).
 /// * The destination folder doesn't exist.
 /// * The destination folder is the source file's current parent folder.
-///
-/// # Examples
-///
-/// Moves the first listed favorited file into the root folder.
-///
-/// ```ignore
-/// use smartschool::{
-///     mydoc::{self, FolderId},
-///     Client,
-/// };
-///
-/// let client = Client::login("https://myschool.smartschool.be", "username", "password").await?;
-/// let (files, _) = mydoc::get_folder_contents(&client, FolderId::Favorites).await?;
-///
-/// let mut file = files[0];
-/// if file.parent_id() != FolderId::Root {
-///     file = mydoc::move_file(&client, file.id(), FolderId::Root).await?;
-/// }
-/// assert_eq!(FolderId::Root, file.parent_id());
-/// ```
 pub async fn move_file<I: Into<FolderId>>(
     client: &Client<'_>,
     source: FileId,
@@ -757,26 +437,6 @@ pub async fn move_file<I: Into<FolderId>>(
 /// * The destination folder doesn't exist.
 /// * The destination folder is the source folder's current parent folder.
 /// * The destination folder is the source folder itself.
-///
-/// # Examples
-///
-/// Moves the first listed favorited folder into the root folder.
-///
-/// ```ignore
-/// use smartschool::{
-///     mydoc::{self, FolderId},
-///     Client,
-/// };
-///
-/// let client = Client::login("https://myschool.smartschool.be", "username", "password").await?;
-/// let (_, folders) = mydoc::get_folder_contents(&client, FolderId::Favorites).await?;
-///
-/// let mut folder = folders[0];
-/// if folder.parent_id() != FolderId::Root {
-///     folder = mydoc::move_folder(&client, folder.id(), FolderId::Root).await?;
-/// }
-/// assert_eq!(FolderId::Root, folder.parent_id());
-/// ```
 pub async fn move_folder<I: Into<FolderId>>(
     client: &Client<'_>,
     source: CustomFolderId,
@@ -807,26 +467,6 @@ pub async fn move_folder<I: Into<FolderId>>(
 /// * The new name contains `/`, `:`, `*`, `?`, `"`, `\\`, `<`, `>` or `|`.
 /// * The new name starts or ends with a `.`.
 /// * The new name is the same as the current name.
-///
-/// # Examples
-///
-/// Renames the first listed file of the root folder.
-///
-/// ```ignore
-/// use smartschool::{
-///     mydoc::{self, FolderId},
-///     Client,
-/// };
-///
-/// let client = Client::login("https://myschool.smartschool.be", "username", "password").await?;
-/// let (files, _) = mydoc::get_folder_contents(&client, FolderId::Root).await?;
-///
-/// let mut file = files[0];
-/// if file.name() != "example.txt" {
-///     file = mydoc::rename_file(&client, file.id(), "example.txt").await?;
-/// }
-/// assert_eq!("example.txt", file.name());
-/// ```
 pub async fn rename_file(client: &Client<'_>, id: FileId, new_name: &str) -> Result<File> {
     let mut form = HashMap::new();
     form.insert("newName", Json::Str(new_name));
@@ -852,25 +492,6 @@ pub async fn rename_file(client: &Client<'_>, id: FileId, new_name: &str) -> Res
 /// * The folder doesn't exist.
 /// * The new name is [illegal](crate::mydoc::rename_file).
 /// * The new name is the same as the current name.
-///
-/// # Examples
-///
-/// Renames the first listed subfolder of the root folder.
-///
-/// ```ignore
-/// use smartschool::{
-///     mydoc::{self, FolderId},
-///     Client,
-/// };
-///
-/// let client = Client::login("https://myschool.smartschool.be", "username", "password").await?;
-/// let (_, folders) = mydoc::get_folder_contents(&client, FolderId::Root).await?;
-///
-/// let mut folder = folders[0];
-/// if folder.name() != "example" {
-///     folder = mydoc::rename_folder(&client, folder.id(), "example").await?;
-/// }
-/// assert_eq!("example", folder.name());
 /// ```
 pub async fn rename_folder(
     client: &Client<'_>,
@@ -908,23 +529,6 @@ pub async fn rename_folder(
 ///   [`FolderId::Favorites`](crate::mydoc::FolderId::Favorites) or
 ///   [`FolderId::Trashed`](crate::mydoc::FolderId::Trashed).
 /// * The destination folder doesn't exist.
-///
-/// # Examples
-///
-/// Restores the first listed trashed file to the root folder.
-///
-/// ```ignore
-/// use smartschool::{
-///     mydoc::{self, FolderId, State},
-///     Client,
-/// };
-///
-/// let client = Client::login("https://myschool.smartschool.be", "username", "password").await?;
-/// let (files, _) = mydoc::get_folder_contents(&client, FolderId::Trashed).await?;
-/// let file = mydoc::restore_file(&client, files[0].id(), FolderId::Root).await?;
-///
-/// assert_eq!(State::Active, file.state());
-/// ```
 pub async fn restore_file<I: Into<FolderId>>(
     client: &Client<'_>,
     id: FileId,
@@ -959,23 +563,6 @@ pub async fn restore_file<I: Into<FolderId>>(
 ///
 /// * The source folder doesn't exist.
 /// * The destination folder doesn't exist.
-///
-/// # Examples
-///
-/// Restores the first listed trashed folder to the root folder.
-///
-/// ```ignore
-/// use smartschool::{
-///     mydoc::{self, FolderId, State},
-///     Client,
-/// };
-///
-/// let client = Client::login("https://myschool.smartschool.be", "username", "password").await?;
-/// let (_, folders) = mydoc::get_folder_contents(&client, FolderId::Trashed).await?;
-/// let folder = mydoc::restore_folder(&client, folders[0].id(), FolderId::Root).await?;
-///
-/// assert_eq!(State::Active, folder.state());
-/// ```
 pub async fn restore_folder<I: Into<FolderId>>(
     client: &Client<'_>,
     id: CustomFolderId,
@@ -1007,25 +594,6 @@ pub async fn restore_folder<I: Into<FolderId>>(
 ///
 /// * The file doesn't exist.
 /// * The revision doesn't exist or isn't associated with the file.
-///
-/// # Examples
-///
-/// Restores the first listed file of the root folder to its current revision,
-/// effectively duplicating the current revision.
-///
-/// ```ignore
-/// use smartschool::{
-///     mydoc::{self, FolderId, State},
-///     Client,
-/// };
-///
-/// let client = Client::login("https://myschool.smartschool.be", "username", "password").await?;
-/// let (files, _) = mydoc::get_folder_contents(&client, FolderId::Root).await?;
-///
-/// let file = files[0];
-/// let revision = mydoc::restore_revision(&client, file.id(), file.current_revision_id()).await?;
-/// assert_eq!(file.id(), revision.file_id());
-/// ```
 pub async fn restore_revision(
     client: &Client<'_>,
     file_id: FileId,
@@ -1054,21 +622,6 @@ pub async fn restore_revision(
 /// # Errors
 ///
 /// Returns an error if the file doesn't exist.
-///
-/// # Examples
-///
-/// Trashes the first listed file of the root folder.
-///
-/// ```ignore
-/// use smartschool::{
-///     mydoc::{self, FolderId},
-///     Client,
-/// };
-///
-/// let client = Client::login("https://myschool.smartschool.be", "username", "password").await?;
-/// let (files, _) = mydoc::get_folder_contents(&client, FolderId::Root).await?;
-/// mydoc::trash_file(&client, files[0].id()).await?;
-/// ```
 pub async fn trash_file(client: &Client<'_>, id: FileId) -> Result<()> {
     let url = format!("{}/mydoc/api/v1/files/{}/trash", client.url(), id);
     client.http_client().post(&url).try_send().await?;
@@ -1082,21 +635,6 @@ pub async fn trash_file(client: &Client<'_>, id: FileId) -> Result<()> {
 /// # Errors
 ///
 /// Returns an error if the folder doesn't exist.
-///
-/// # Examples
-///
-/// Trashes the first listed subfolder of the root folder.
-///
-/// ```ignore
-/// use smartschool::{
-///     mydoc::{self, FolderId},
-///     Client,
-/// };
-///
-/// let client = Client::login("https://myschool.smartschool.be", "username", "password").await?;
-/// let (_, folders) = mydoc::get_folder_contents(&client, FolderId::Root).await?;
-/// mydoc::trash_folder(&client, folders[0].id()).await?;
-/// ```
 pub async fn trash_folder(client: &Client<'_>, id: CustomFolderId) -> Result<()> {
     let url = format!("{}/mydoc/api/v1/folders/{}/trash", client.url(), id);
     client.http_client().post(&url).try_send().await?;
@@ -1108,23 +646,6 @@ pub async fn trash_folder(client: &Client<'_>, id: CustomFolderId) -> Result<()>
 /// # Errors
 ///
 /// Returns an error if the file doesn't exist.
-///
-/// # Examples
-///
-/// Unmarks the first listed file of the root folder as favorite.
-///
-/// ```ignore
-/// use smartschool::{
-///     mydoc::{self, FolderId},
-///     Client,
-/// };
-///
-/// let client = Client::login("https://myschool.smartschool.be", "username", "password").await?;
-/// let (files, _) = mydoc::get_folder_contents(&client, FolderId::Root).await?;
-/// let file = mydoc::unmark_file_as_favorite(&client, files[0].id()).await?;
-///
-/// assert_eq!(false, file.is_favorite());
-/// ```
 pub async fn unmark_file_as_favorite(client: &Client<'_>, id: FileId) -> Result<File> {
     let url = format!(
         "{}/mydoc/api/v1/files/{}/unmark-as-favourite",
@@ -1146,23 +667,6 @@ pub async fn unmark_file_as_favorite(client: &Client<'_>, id: FileId) -> Result<
 /// # Errors
 ///
 /// Returns an error if the folder doesn't exist.
-///
-/// # Examples
-///
-/// Unmarks the first listed subfolder of the root folder as favorite.
-///
-/// ```ignore
-/// use smartschool::{
-///     mydoc::{self, FolderId},
-///     Client,
-/// };
-///
-/// let client = Client::login("https://myschool.smartschool.be", "username", "password").await?;
-/// let (_, folders) = mydoc::get_folder_contents(&client, FolderId::Root).await?;
-/// let folder = mydoc::unmark_folder_as_favorite(&client, folders[0].id()).await?;
-///
-/// assert_eq!(false, folder.is_favorite());
-/// ```
 pub async fn unmark_folder_as_favorite(client: &Client<'_>, id: CustomFolderId) -> Result<Folder> {
     let url = format!(
         "{}/mydoc/api/v1/folders/{}/unmark-as-favourite",
@@ -1192,28 +696,6 @@ pub async fn unmark_folder_as_favorite(client: &Client<'_>, id: CustomFolderId) 
 ///
 /// * The destination folder doesn't exist.
 /// * The upload directory is invalid.
-///
-/// # Examples
-///
-/// Uploads a text file to the root folder.
-///
-/// ```ignore
-/// use smartschool::{
-///     mydoc::{self, FolderId},
-///     upload::{self, File},
-///     Client,
-/// };
-///
-/// let client = Client::login("https://myschool.smartschool.be", "username", "password").await?;
-///
-/// let file = File::from_text("Hello World").build("example.txt");
-/// let upload_dir = upload::get_upload_directory(&client).await?;
-/// upload::upload_file(&client, upload_dir.clone(), file).await?;
-/// let files = mydoc::upload(&client, FolderId::Root, &upload_dir).await?;
-///
-/// assert_eq!(1, files.len());
-/// assert_eq!("example.txt", files[0].name());
-/// ```
 pub async fn upload<I: Into<FolderId>>(
     client: &Client<'_>,
     parent_id: I,
@@ -1269,95 +751,39 @@ impl From<Uuid> for CustomFolderId {
 #[derive(Clone, Debug, Deserialize, Hash, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct File {
-    current_revision: Revision,
-    current_revision_id: RevisionId,
-    date_changed: DateTime<FixedOffset>,
-    date_created: DateTime<FixedOffset>,
-    date_recent_action: DateTime<FixedOffset>,
-    date_state_changed: DateTime<FixedOffset>,
-    id: FileId,
+    /// The file's current revision.
+    pub current_revision: Revision,
+    /// The identifier of the file's current revision.
+    pub current_revision_id: RevisionId,
+    /// The date when the file's content was last changed.
+    pub date_changed: DateTime<FixedOffset>,
+    /// The date when the file was created.
+    pub date_created: DateTime<FixedOffset>,
+    /// The date when an action was last performed on the file. This includes
+    /// actions that might not be immediately obvious, like downloading the file
+    /// or marking the file as favorite.
+    pub date_recent_action: DateTime<FixedOffset>,
+    /// The date when the file's state last changed.
+    pub date_state_changed: DateTime<FixedOffset>,
+    /// The file's identifier.
+    pub id: FileId,
+    /// `true` if the file is marked as favorite.
     #[serde(rename = "isFavourite")]
-    is_favorite: bool,
-    name: String,
-    parent_id: FolderId,
-    state: State,
-}
-
-impl File {
-    /// Returns a reference to the current revision of the file.
-    pub fn current_revision(&self) -> &Revision {
-        &self.current_revision
-    }
-
-    /// Returns the identifier of the file's current revision.
-    pub fn current_revision_id(&self) -> RevisionId {
-        self.current_revision_id
-    }
-
-    /// Returns the date when the file's content was last changed.
-    pub fn date_changed(&self) -> DateTime<FixedOffset> {
-        self.date_changed
-    }
-
-    /// Returns the date when the file was created.
-    pub fn date_created(&self) -> DateTime<FixedOffset> {
-        self.date_created
-    }
-
-    /// Returns the date when an action was last performed on the file.
-    /// This includes actions that might not be immediately obvious, like
-    /// downloading the file or marking the file as favorite.
-    pub fn date_recent_action(&self) -> DateTime<FixedOffset> {
-        self.date_recent_action
-    }
-
-    /// Returns the date when the file's state was last changed.
-    pub fn date_state_changed(&self) -> DateTime<FixedOffset> {
-        self.date_state_changed
-    }
-
-    /// Returns the file's identifier.
-    pub fn id(&self) -> FileId {
-        self.id
-    }
-
-    /// Consumes the file and returns its name.
-    pub fn into_name(self) -> String {
-        self.name
-    }
-
-    /// Consumes the file and returns its current revision.
-    pub fn into_revision(self) -> Revision {
-        self.current_revision
-    }
-
-    /// Returns `true` if the file is marked as favorite.
-    pub fn is_favorite(&self) -> bool {
-        self.is_favorite
-    }
-
-    /// Returns the name of the file.
-    pub fn name(&self) -> &str {
-        &self.name
-    }
-
-    /// Returns the identifier of the file's parent folder.
+    pub is_favorite: bool,
+    /// The file's name.
+    pub name: String,
+    /// The identifier of the file's parent folder.
     ///
-    /// The returned [`FolderId`](crate::mydoc::FolderId) should only ever be of
+    /// This [`FolderId`](crate::mydoc::FolderId) should only ever be of
     /// variants [`FolderId::Custom`](crate::mydoc::FolderId::Custom) or
     /// [`FolderId::Root`](crate::mydoc::FolderId::Root).
     ///
     /// Trashed files always list
     /// [`FolderId::Root`](crate::mydoc::FolderId::Root) as their parent folder.
     /// To check if a file is trashed, you can query its state instead.
-    pub fn parent_id(&self) -> FolderId {
-        self.parent_id
-    }
-
-    /// Returns the file's state.
-    pub fn state(&self) -> State {
-        self.state
-    }
+    pub parent_id: FolderId,
+    /// The file's state.
+    pub state: State,
 }
 
 /// A handle to a [`File`](crate::mydoc::File).
@@ -1387,83 +813,36 @@ impl From<Uuid> for FileId {
 #[derive(Clone, Debug, Deserialize, Hash, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Folder {
-    color: FolderColor,
-    date_changed: DateTime<FixedOffset>,
-    date_created: DateTime<FixedOffset>,
-    date_state_changed: DateTime<FixedOffset>,
+    /// The folder's color.
+    pub color: FolderColor,
+    /// The date when the folder was last changed.
+    pub date_changed: DateTime<FixedOffset>,
+    /// The date when the folder was created.
+    pub date_created: DateTime<FixedOffset>,
+    /// The date when the folder's state last changed.
+    pub date_state_changed: DateTime<FixedOffset>,
+    /// `true` if the folder has subfolders.
     #[serde(rename = "hasSubFolders")]
-    has_subfolders: bool,
-    id: CustomFolderId,
+    pub has_subfolders: bool,
+    /// The folder's identifier.
+    pub id: CustomFolderId,
+    /// `true` if the folder is marked as favorite.
     #[serde(rename = "isFavourite")]
-    is_favorite: bool,
-    name: String,
-    parent_id: FolderId,
-    state: State,
-}
-
-impl Folder {
-    /// Returns the color of the folder.
-    pub fn color(&self) -> FolderColor {
-        self.color
-    }
-
-    /// Returns the date when the folder was last changed.
-    pub fn date_changed(&self) -> DateTime<FixedOffset> {
-        self.date_changed
-    }
-
-    /// Returns the date when the folder was created.
-    pub fn date_created(&self) -> DateTime<FixedOffset> {
-        self.date_created
-    }
-
-    /// Returns the date when the folder's state was last changed.
-    pub fn date_state_changed(&self) -> DateTime<FixedOffset> {
-        self.date_state_changed
-    }
-
-    /// Returns `true` if the folder has subfolders.
-    pub fn has_subfolders(&self) -> bool {
-        self.has_subfolders
-    }
-
-    /// Returns the folder's identifier.
-    pub fn id(&self) -> CustomFolderId {
-        self.id
-    }
-
-    /// Consumes the folder and returns its name.
-    pub fn into_name(self) -> String {
-        self.name
-    }
-
-    /// Returns `true` if the folder is marked as favorite.
-    pub fn is_favorite(&self) -> bool {
-        self.is_favorite
-    }
-
-    /// Returns the name of the folder.
-    pub fn name(&self) -> &str {
-        &self.name
-    }
-
-    /// Returns the identifier of the folder's parent folder.
+    pub is_favorite: bool,
+    /// The folder's name.
+    pub name: String,
+    /// The identifier of the folder's parent folder.
     ///
-    /// The returned [`FolderId`](crate::mydoc::FolderId) should only ever be of
+    /// This [`FolderId`](crate::mydoc::FolderId) should only ever be of
     /// variants [`FolderId::Custom`](crate::mydoc::FolderId::Custom) or
     /// [`FolderId::Root`](crate::mydoc::FolderId::Root).
     ///
     /// Trashed folders always list
     /// [`FolderId::Root`](crate::mydoc::FolderId::Root) as their parent folder.
-    /// To check if a folder is trashed, you query use its state instead.
-    pub fn parent_id(&self) -> FolderId {
-        self.parent_id
-    }
-
-    /// Returns the folder's state.
-    pub fn state(&self) -> State {
-        self.state
-    }
+    /// To check if a folder is trashed, you can query its state instead.
+    pub parent_id: FolderId,
+    /// The folder's state.
+    pub state: State,
 }
 
 /// The color of a folder.
@@ -1503,8 +882,6 @@ impl Default for FolderColor {
 /// An identifier of a folder in the virtual file system.
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
 pub enum FolderId {
-    /// A user-created folder in the virtual file system.
-    Custom(CustomFolderId),
     /// A special folder containing files and folders marked as favorites for
     /// quick access.
     ///
@@ -1520,6 +897,8 @@ pub enum FolderId {
     Favorites,
     /// The root folder of the virtual file system.
     Root,
+    /// A user-created folder in the virtual file system.
+    Custom(CustomFolderId),
     /// A folder containing trashed files.
     ///
     /// After 30 days, files in this folder are permanently deleted.
@@ -1553,95 +932,32 @@ struct GetFolderContents {
 #[derive(Clone, Debug, Deserialize, Hash, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct HistoryEntry {
-    date: DateTime<FixedOffset>,
-    is_download_event: bool,
-    is_special_event: bool,
-    text: String,
-    user: HistoryEntryUser,
-}
-
-impl HistoryEntry {
-    /// Returns the date when the recorded event happened.
-    pub fn date(&self) -> DateTime<FixedOffset> {
-        self.date
-    }
-
-    /// Consumes the history entry and returns a textual representation of the
-    /// performed action.
-    pub fn into_text(self) -> String {
-        self.text
-    }
-
-    /// Consumes the history entry and returns a struct representing the user
-    /// who performed the action.
-    pub fn into_user(self) -> HistoryEntryUser {
-        self.user
-    }
-
-    /// Returns `true` if the entry represents a "download event", like viewing
-    /// the file or downloading the file.
-    pub fn is_download_event(&self) -> bool {
-        self.is_download_event
-    }
-
-    /// Returns `true` if the entry represents a "special event".
+    /// The date when the recorded event happened.
+    pub date: DateTime<FixedOffset>,
+    /// `true` if the entry represents a "download event", like viewing the file
+    /// or downloading the file.
+    pub is_download_event: bool,
+    /// `true` if the entry represents a "special event".
     /// TODO: Figure out what this means.
-    pub fn is_special_event(&self) -> bool {
-        self.is_special_event
-    }
-
-    /// Returns a textual representation of the performed action.
-    pub fn text(&self) -> &str {
-        &self.text
-    }
-
-    /// Returns a struct representing the user who performed the action.
-    pub fn user(&self) -> &HistoryEntryUser {
-        &self.user
-    }
+    pub is_special_event: bool,
+    /// A textual representation of the recorded event.
+    pub text: String,
+    /// The user who performed the action.
+    pub user: HistoryEntryUser,
 }
 
 /// A user who performed an action on a file or folder.
 #[derive(Clone, Debug, Deserialize, Hash, Serialize)]
 pub struct HistoryEntryUser {
-    #[serde(rename = "userIdentifier")]
-    id: String,
-    name: String,
-    #[serde(rename = "userPictureHash")]
-    picture_hash: String,
-}
-
-impl HistoryEntryUser {
-    /// Returns the user's identifier, which seems to equal
+    /// The user's identifier, which seems to equal
     /// `"{school-id}_{user-id}_{account-id}"`.
-    pub fn id(&self) -> &str {
-        &self.id
-    }
-
-    /// Consumes the user and returns their identifier.
-    pub fn into_id(self) -> String {
-        self.id
-    }
-
-    /// Consumes the user and returns their name.
-    pub fn into_name(self) -> String {
-        self.name
-    }
-
-    /// Consumes the user and returns their picture hash.
-    pub fn into_picture_hash(self) -> String {
-        self.picture_hash
-    }
-
-    /// Returns the user's name.
-    pub fn name(&self) -> &str {
-        &self.name
-    }
-
-    /// Returns the user's picture hash.
-    pub fn picture_hash(&self) -> &str {
-        &self.picture_hash
-    }
+    #[serde(rename = "userIdentifier")]
+    pub id: String,
+    /// The user's name.
+    pub name: String,
+    /// The user's picture hash.
+    #[serde(rename = "userPictureHash")]
+    pub picture_hash: String,
 }
 
 /// A revision of a file in the virtual file system.
@@ -1650,40 +966,18 @@ impl HistoryEntryUser {
 #[derive(Clone, Debug, Deserialize, Hash, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Revision {
+    /// The date when the revision was made.
     #[serde(rename = "dateCreated")]
-    date: DateTime<FixedOffset>,
-    file_id: FileId,
+    pub date: DateTime<FixedOffset>,
+    /// The identifier of the associated file.
+    pub file_id: FileId,
+    /// The name of the associated file.
     #[serde(rename = "label")]
-    file_name: String,
-    file_size: u64,
-    id: RevisionId,
-}
-
-impl Revision {
-    /// Returns the date when the revision was made.
-    pub fn date(&self) -> DateTime<FixedOffset> {
-        self.date
-    }
-
-    /// Returns the associated file's identifier.
-    pub fn file_id(&self) -> FileId {
-        self.file_id
-    }
-
-    /// Returns the name of the associated file.
-    pub fn file_name(&self) -> &str {
-        &self.file_name
-    }
-
-    /// Returns the size of the associated file in bytes.
-    pub fn file_size(&self) -> u64 {
-        self.file_size
-    }
-
-    /// Returns the revision's identifier.
-    pub fn id(&self) -> RevisionId {
-        self.id
-    }
+    pub file_name: String,
+    /// The size of the associated file in bytes.
+    pub file_size: u64,
+    /// The revision's identifier.
+    pub id: RevisionId,
 }
 
 /// A handle to a [`Revision`](crate::mydoc::Revision).
@@ -1715,36 +1009,36 @@ impl From<Uuid> for RevisionId {
 pub enum State {
     /// An active file or folder.
     Active,
-    /// A deleted file or folder.
-    Deleted,
     /// A trashed file or folder.
     Trashed,
+    /// A deleted file or folder.
+    Deleted,
 }
 
 /// A template for a file.
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
 pub enum Template<'a> {
-    /// A custom school-specific template, identified by a template identifier
-    /// string.
-    ///
-    /// Fetching a template identifier string is currently not possible and must
-    /// happen manually.
-    Custom(&'a str),
+    /// The default template for documents.
+    Word,
     /// The default template for spreadsheets.
     Excel,
     /// The default template for presentations.
     PowerPoint,
-    /// The default template for documents.
-    Word,
+    /// A custom school-specific template, identified by a template identifier
+    /// string.
+    ///
+    /// Fetching a template identifier string automatically is not yet possible
+    /// and must happen manually for now.
+    Custom(&'a str),
 }
 
 impl<'a> Template<'a> {
     fn as_str(&self) -> &'static str {
         match self {
-            Template::Custom(_) => "template",
+            Template::Word => "word",
             Template::Excel => "excel",
             Template::PowerPoint => "powerpoint",
-            Template::Word => "word",
+            Template::Custom(_) => "template",
         }
     }
 }

@@ -20,7 +20,7 @@ async fn main() -> Result<()> {
     let files = mydoc::get_recent_files(&client).await?;
     if !files.is_empty() {
         for file in files {
-            println!("{}", file.name());
+            println!("{}", file.name);
         }
     } else {
         println!("No recently modified files...");
