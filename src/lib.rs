@@ -29,8 +29,7 @@
 //! }
 //! ```
 
-#![feature(async_closure, custom_attribute)]
-#![warn(missing_docs, rust_2018_idioms)]
+#![warn(missing_docs)]
 
 pub use client::Client;
 pub use error::Error;

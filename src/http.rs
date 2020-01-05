@@ -7,11 +7,13 @@ use reqwest::{RequestBuilder, Response};
 
 /// Unfolds a [`Response`](reqwest::Response) into a stream.
 pub fn into_stream(response: Response) -> impl Stream<Item = Result<Bytes>> {
-    stream::unfold(response, async move |mut response| {
-        match response.chunk().await {
-            Ok(Some(chunk)) => Some((Ok(chunk), response)),
-            Ok(None) => None,
-            Err(err) => Some((Err(err.into()), response)),
+    stream::unfold(response, |mut response| {
+        async {
+            match response.chunk().await {
+                Ok(Some(chunk)) => Some((Ok(chunk), response)),
+                Ok(None) => None,
+                Err(err) => Some((Err(err.into()), response)),
+            }
         }
     })
 }
