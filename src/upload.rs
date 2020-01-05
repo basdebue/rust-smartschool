@@ -80,10 +80,10 @@ impl File {
     pub fn from_stream<S>(stream: S) -> FileBuilder
     where
         S: TryStream + Send + Sync + 'static,
+        S::Ok: Into<Bytes>,
         S::Error: Into<Box<dyn Error + Send + Sync>>,
-        Bytes: From<S::Ok>,
     {
-        let inner = Part::stream(Body::wrap_stream(stream.map_ok(Bytes::from)));
+        let inner = Part::stream(Body::wrap_stream(stream.map_ok(Into::into)));
         FileBuilder { inner }
     }
 

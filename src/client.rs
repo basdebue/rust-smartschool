@@ -5,7 +5,7 @@ use crate::{
     http::TrySend,
 };
 use regex::Regex;
-use reqwest::{Client as HttpClient, RedirectPolicy};
+use reqwest::{redirect, Client as HttpClient};
 use std::collections::HashMap;
 
 /// Extracts the login token from a response body.
@@ -51,8 +51,7 @@ impl<'a> Client<'a> {
     pub async fn login(url: &'a str, username: &str, password: &str) -> Result<Client<'a>> {
         let http_client = HttpClient::builder()
             .cookie_store(true)
-            .redirect(RedirectPolicy::none())
-            .use_sys_proxy()
+            .redirect(redirect::Policy::none())
             .build()?;
 
         let request_url = format!("{}/login", url);
