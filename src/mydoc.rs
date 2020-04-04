@@ -1,15 +1,9 @@
 //! A virtual file system hosted on the server.
 
-use crate::{
-    error::Result,
-    http::{self, TrySend},
-    serde::Json,
-    upload::UploadDirectory,
-    Client,
-};
+use crate::{error::Result, http::TrySend, serde::Json, upload::UploadDirectory, Client};
 use bytes::Bytes;
 use chrono::{DateTime, FixedOffset};
-use futures::{Stream, TryFutureExt};
+use futures::{Stream, TryFutureExt, TryStreamExt};
 use serde::{Deserialize, Serialize};
 use std::{collections::HashMap, fmt};
 use uuid::Uuid;
@@ -214,7 +208,7 @@ pub async fn download_file(
 ) -> Result<impl Stream<Item = Result<Bytes>>> {
     let url = format!("{}/mydoc/api/v1/files/{}/download", client.url(), id);
     let response = client.http_client().get(&url).try_send().await?;
-    Ok(http::into_stream(response))
+    Ok(response.bytes_stream().err_into())
 }
 
 /// Downloads a file at a specific revision and returns its contents as a
@@ -238,7 +232,7 @@ pub async fn download_revision(
         revision_id
     );
     let response = client.http_client().get(&url).try_send().await?;
-    Ok(http::into_stream(response))
+    Ok(response.bytes_stream().err_into())
 }
 
 /// Returns a vector of history entries representing the history of a file,

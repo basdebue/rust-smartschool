@@ -1,22 +1,8 @@
 //! HTTP-related utilities.
 
 use crate::error::{Error, Result};
-use bytes::Bytes;
-use futures::{future::BoxFuture, stream, Stream};
+use futures::future::BoxFuture;
 use reqwest::{RequestBuilder, Response};
-
-/// Unfolds a [`Response`](reqwest::Response) into a stream.
-pub fn into_stream(response: Response) -> impl Stream<Item = Result<Bytes>> {
-    stream::unfold(response, |mut response| {
-        async {
-            match response.chunk().await {
-                Ok(Some(chunk)) => Some((Ok(chunk), response)),
-                Ok(None) => None,
-                Err(err) => Some((Err(err.into()), response)),
-            }
-        }
-    })
-}
 
 /// Adds a custom sending method to
 /// [`RequestBuilder`](reqwest::RequestBuilder)s.
