@@ -36,7 +36,6 @@ pub use error::Error;
 
 pub mod client;
 pub mod error;
-mod http;
 pub mod mydoc;
 mod serde;
 pub mod upload;

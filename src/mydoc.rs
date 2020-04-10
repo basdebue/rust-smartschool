@@ -1,9 +1,8 @@
 //! A virtual file system hosted on the server.
 
-use crate::{error::Result, http::TrySend, serde::Json, upload::UploadDirectory, Client};
-use bytes::Bytes;
+use crate::{error::Result, serde::Json, upload::UploadDirectory, Client};
 use chrono::{DateTime, FixedOffset};
-use futures::{Stream, TryFutureExt, TryStreamExt};
+use futures::{AsyncRead, TryFutureExt};
 use serde::{Deserialize, Serialize};
 use std::{collections::HashMap, fmt};
 use uuid::Uuid;
@@ -25,10 +24,8 @@ pub async fn change_folder_color(
     client
         .http_client()
         .post(&url)
-        .json(&form)
-        .try_send()
-        .await?
-        .json()
+        .body_json(&form)?
+        .recv_json()
         .err_into()
         .await
 }
@@ -57,10 +54,8 @@ pub async fn copy_file<I: Into<FolderId>>(
     client
         .http_client()
         .post(&url)
-        .json(&form)
-        .try_send()
-        .await?
-        .json()
+        .body_json(&form)?
+        .recv_json()
         .err_into()
         .await
 }
@@ -90,10 +85,8 @@ pub async fn copy_folder<I: Into<FolderId>>(
     client
         .http_client()
         .post(&url)
-        .json(&form)
-        .try_send()
-        .await?
-        .json()
+        .body_json(&form)?
+        .recv_json()
         .err_into()
         .await
 }
@@ -129,10 +122,8 @@ pub async fn create_file_from_template<I: Into<FolderId>>(
     client
         .http_client()
         .post(&url)
-        .json(&form)
-        .try_send()
-        .await?
-        .json()
+        .body_json(&form)?
+        .recv_json()
         .err_into()
         .await
 }
@@ -164,10 +155,8 @@ pub async fn create_folder<I: Into<FolderId>>(
     client
         .http_client()
         .post(&url)
-        .json(&form)
-        .try_send()
-        .await?
-        .json()
+        .body_json(&form)?
+        .recv_json()
         .err_into()
         .await
 }
@@ -180,7 +169,7 @@ pub async fn create_folder<I: Into<FolderId>>(
 /// Returns an error if the file doesn't exist.
 pub async fn delete_file(client: &Client<'_>, id: FileId) -> Result<()> {
     let url = format!("{}/mydoc/api/v1/files/{}", client.url(), id);
-    client.http_client().delete(&url).try_send().await?;
+    client.http_client().delete(&url).await?;
     Ok(())
 }
 
@@ -192,7 +181,7 @@ pub async fn delete_file(client: &Client<'_>, id: FileId) -> Result<()> {
 /// Returns an error if the folder doesn't exist.
 pub async fn delete_folder(client: &Client<'_>, id: CustomFolderId) -> Result<()> {
     let url = format!("{}/mydoc/api/v1/folders/{}", client.url(), id);
-    client.http_client().delete(&url).try_send().await?;
+    client.http_client().delete(&url).await?;
     Ok(())
 }
 
@@ -202,13 +191,9 @@ pub async fn delete_folder(client: &Client<'_>, id: CustomFolderId) -> Result<()
 /// # Errors
 ///
 /// Returns an error if the file doesn't exist.
-pub async fn download_file(
-    client: &Client<'_>,
-    id: FileId,
-) -> Result<impl Stream<Item = Result<Bytes>>> {
+pub async fn download_file(client: &Client<'_>, id: FileId) -> Result<impl AsyncRead> {
     let url = format!("{}/mydoc/api/v1/files/{}/download", client.url(), id);
-    let response = client.http_client().get(&url).try_send().await?;
-    Ok(response.bytes_stream().err_into())
+    client.http_client().get(&url).err_into().await
 }
 
 /// Downloads a file at a specific revision and returns its contents as a
@@ -224,15 +209,14 @@ pub async fn download_revision(
     client: &Client<'_>,
     file_id: FileId,
     revision_id: RevisionId,
-) -> Result<impl Stream<Item = Result<Bytes>>> {
+) -> Result<impl AsyncRead> {
     let url = format!(
         "{}/mydoc/api/v1/files/{}/revisions/{}/download",
         client.url(),
         file_id,
         revision_id
     );
-    let response = client.http_client().get(&url).try_send().await?;
-    Ok(response.bytes_stream().err_into())
+    client.http_client().get(&url).err_into().await
 }
 
 /// Returns a vector of history entries representing the history of a file,
@@ -240,28 +224,14 @@ pub async fn download_revision(
 /// vector.
 pub async fn get_file_history(client: &Client<'_>, id: FileId) -> Result<Vec<HistoryEntry>> {
     let url = format!("{}/mydoc/api/v1/files/{}/history", client.url(), id);
-    client
-        .http_client()
-        .get(&url)
-        .try_send()
-        .await?
-        .json()
-        .err_into()
-        .await
+    client.http_client().get(&url).recv_json().err_into().await
 }
 
 /// Returns a vector of file revisions in arbitrary order. Nonexistent files
 /// produce an empty vector.
 pub async fn get_file_revisions(client: &Client<'_>, id: FileId) -> Result<Vec<Revision>> {
     let url = format!("{}/mydoc/api/v1/files/{}/revisions", client.url(), id);
-    client
-        .http_client()
-        .get(&url)
-        .try_send()
-        .await?
-        .json()
-        .err_into()
-        .await
+    client.http_client().get(&url).recv_json().err_into().await
 }
 
 /// Returns the contents of a folder in arbitrary order.
@@ -279,14 +249,8 @@ pub async fn get_folder_contents<I: Into<FolderId>>(
     } else {
         format!("{}/mydoc/api/v1/directory-listing/{}", client.url(), id)
     };
-    let response: GetFolderContents = client
-        .http_client()
-        .get(&url)
-        .try_send()
-        .await?
-        .json()
-        .await?;
-    Ok((response.files, response.folders))
+    let GetFolderContents { files, folders } = client.http_client().get(&url).recv_json().await?;
+    Ok((files, folders))
 }
 
 /// Returns a vector of history entries representing the history of a folder,
@@ -297,14 +261,7 @@ pub async fn get_folder_history(
     id: CustomFolderId,
 ) -> Result<Vec<HistoryEntry>> {
     let url = format!("{}/mydoc/api/v1/folders/{}/history", client.url(), id);
-    client
-        .http_client()
-        .get(&url)
-        .try_send()
-        .await?
-        .json()
-        .err_into()
-        .await
+    client.http_client().get(&url).recv_json().err_into().await
 }
 
 /// Returns the folder's path represented as breadcrumbs, consisting of a vector
@@ -318,28 +275,14 @@ pub async fn get_folder_parents(
     id: CustomFolderId,
 ) -> Result<Vec<CustomFolderId>> {
     let url = format!("{}/mydoc/api/v1/folders/{}/parents", client.url(), id);
-    client
-        .http_client()
-        .get(&url)
-        .try_send()
-        .await?
-        .json()
-        .err_into()
-        .await
+    client.http_client().get(&url).recv_json().err_into().await
 }
 
 /// Returns a vector of recently modified files, sorted by modification date in
 /// descending order.
 pub async fn get_recent_files(client: &Client<'_>) -> Result<Vec<File>> {
     let url = format!("{}/mydoc/api/v1/files/recent", client.url());
-    client
-        .http_client()
-        .get(&url)
-        .try_send()
-        .await?
-        .json()
-        .err_into()
-        .await
+    client.http_client().get(&url).recv_json().err_into().await
 }
 
 /// Marks a file as favorite and returns the modified file.
@@ -353,14 +296,7 @@ pub async fn mark_file_as_favorite(client: &Client<'_>, id: FileId) -> Result<Fi
         client.url(),
         id
     );
-    client
-        .http_client()
-        .post(&url)
-        .try_send()
-        .await?
-        .json()
-        .err_into()
-        .await
+    client.http_client().post(&url).recv_json().err_into().await
 }
 
 /// Marks a folder as favorite and returns the modified folder.
@@ -374,14 +310,7 @@ pub async fn mark_folder_as_favorite(client: &Client<'_>, id: CustomFolderId) ->
         client.url(),
         id
     );
-    client
-        .http_client()
-        .post(&url)
-        .try_send()
-        .await?
-        .json()
-        .err_into()
-        .await
+    client.http_client().post(&url).recv_json().err_into().await
 }
 
 /// Moves a file into the specified destination folder and returns the moved
@@ -409,10 +338,8 @@ pub async fn move_file<I: Into<FolderId>>(
     client
         .http_client()
         .post(&url)
-        .json(&form)
-        .try_send()
-        .await?
-        .json()
+        .body_json(&form)?
+        .recv_json()
         .err_into()
         .await
 }
@@ -443,10 +370,8 @@ pub async fn move_folder<I: Into<FolderId>>(
     client
         .http_client()
         .post(&url)
-        .json(&form)
-        .try_send()
-        .await?
-        .json()
+        .body_json(&form)?
+        .recv_json()
         .err_into()
         .await
 }
@@ -469,10 +394,8 @@ pub async fn rename_file(client: &Client<'_>, id: FileId, new_name: &str) -> Res
     client
         .http_client()
         .post(&url)
-        .json(&form)
-        .try_send()
-        .await?
-        .json()
+        .body_json(&form)?
+        .recv_json()
         .err_into()
         .await
 }
@@ -499,10 +422,8 @@ pub async fn rename_folder(
     client
         .http_client()
         .post(&url)
-        .json(&form)
-        .try_send()
-        .await?
-        .json()
+        .body_json(&form)?
+        .recv_json()
         .err_into()
         .await
 }
@@ -535,10 +456,8 @@ pub async fn restore_file<I: Into<FolderId>>(
     client
         .http_client()
         .post(&url)
-        .json(&form)
-        .try_send()
-        .await?
-        .json()
+        .body_json(&form)?
+        .recv_json()
         .err_into()
         .await
 }
@@ -569,10 +488,8 @@ pub async fn restore_folder<I: Into<FolderId>>(
     client
         .http_client()
         .post(&url)
-        .json(&form)
-        .try_send()
-        .await?
-        .json()
+        .body_json(&form)?
+        .recv_json()
         .err_into()
         .await
 }
@@ -599,14 +516,7 @@ pub async fn restore_revision(
         file_id,
         revision_id
     );
-    client
-        .http_client()
-        .post(&url)
-        .try_send()
-        .await?
-        .json()
-        .err_into()
-        .await
+    client.http_client().post(&url).recv_json().err_into().await
 }
 
 /// Moves a file to the [`Trashed`](crate::mydoc::FolderId::Trashed) folder.
@@ -618,7 +528,7 @@ pub async fn restore_revision(
 /// Returns an error if the file doesn't exist.
 pub async fn trash_file(client: &Client<'_>, id: FileId) -> Result<()> {
     let url = format!("{}/mydoc/api/v1/files/{}/trash", client.url(), id);
-    client.http_client().post(&url).try_send().await?;
+    client.http_client().post(&url).await?;
     Ok(())
 }
 
@@ -631,7 +541,7 @@ pub async fn trash_file(client: &Client<'_>, id: FileId) -> Result<()> {
 /// Returns an error if the folder doesn't exist.
 pub async fn trash_folder(client: &Client<'_>, id: CustomFolderId) -> Result<()> {
     let url = format!("{}/mydoc/api/v1/folders/{}/trash", client.url(), id);
-    client.http_client().post(&url).try_send().await?;
+    client.http_client().post(&url).await?;
     Ok(())
 }
 
@@ -646,14 +556,7 @@ pub async fn unmark_file_as_favorite(client: &Client<'_>, id: FileId) -> Result<
         client.url(),
         id,
     );
-    client
-        .http_client()
-        .post(&url)
-        .try_send()
-        .await?
-        .json()
-        .err_into()
-        .await
+    client.http_client().post(&url).recv_json().err_into().await
 }
 
 /// Unmarks a folder as favorite and returns the modified folder.
@@ -667,14 +570,7 @@ pub async fn unmark_folder_as_favorite(client: &Client<'_>, id: CustomFolderId) 
         client.url(),
         id,
     );
-    client
-        .http_client()
-        .post(&url)
-        .try_send()
-        .await?
-        .json()
-        .err_into()
-        .await
+    client.http_client().post(&url).recv_json().err_into().await
 }
 
 /// Uploads the contents of an
@@ -703,19 +599,17 @@ pub async fn upload<I: Into<FolderId>>(
 
     // The server response also contains an `exceptions` field, but this seems to
     // always be empty.
-    let response: Upload = client
+    let Upload { files } = client
         .http_client()
         .post(&url)
-        .json(&form)
-        .try_send()
-        .await?
-        .json()
+        .body_json(&form)?
+        .recv_json()
         .await?;
 
     // The `files` field of the response is actually a map where the key is the
     // file's identifier and the value is the file itself. Since the files
     // themselves have an `id` field anyway, we discard the keys.
-    Ok(response.files.into_iter().map(|(_, value)| value).collect())
+    Ok(files.into_iter().map(|(_, value)| value).collect())
 }
 
 /// A handle to a [`Folder`](crate::mydoc::Folder).
