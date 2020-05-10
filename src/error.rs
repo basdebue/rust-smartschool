@@ -1,17 +1,17 @@
 //! Error handling functionality.
 
-use reqwest::{Error as ReqwestError, StatusCode};
+use serde_json::Error as JsonError;
+use serde_urlencoded::ser::Error as UrlEncodedError;
 use std::{error::Error as StdError, fmt};
+use surf::Exception as HttpError;
 
 /// An error returned by the `smartschool` crate.
 #[derive(Debug)]
 pub enum Error {
     /// An authentication failure, most likely due to invalid login credentials.
     Authentication,
-    /// An error returned by the [`reqwest`](reqwest) crate.
-    Reqwest(ReqwestError),
-    /// An HTTP error response.
-    StatusCode(StatusCode),
+    /// An error returned by the [`surf`](surf) crate.
+    Http(HttpError),
 }
 
 impl fmt::Display for Error {
@@ -20,9 +20,25 @@ impl fmt::Display for Error {
     }
 }
 
-impl From<ReqwestError> for Error {
-    fn from(err: ReqwestError) -> Self {
-        Error::Reqwest(err)
+impl From<HttpError> for Error {
+    fn from(err: HttpError) -> Self {
+        Error::Http(err)
+    }
+}
+
+// JSON deserialization errors are also returned as `surf::Exception`s, so we
+// have opted to do the same for serialization errors.
+impl From<JsonError> for Error {
+    fn from(err: JsonError) -> Self {
+        Error::Http(Box::new(err))
+    }
+}
+
+// JSON errors are also returned as `surf::Exception`s, so we have opted to do
+// the same for `x-www-form-urlencoded` errors.
+impl From<UrlEncodedError> for Error {
+    fn from(err: UrlEncodedError) -> Self {
+        Error::Http(Box::new(err))
     }
 }
 

@@ -1,12 +1,9 @@
 //! A client for interacting with a Smartschool instance.
 
-use crate::{
-    error::{Error, Result},
-    http::TrySend,
-};
+use crate::error::{Error, Result};
 use regex::Regex;
-use reqwest::{redirect, Client as HttpClient};
 use std::collections::HashMap;
+use surf::Client as HttpClient;
 
 /// Extracts the request parameters from a response body.
 fn get_params(body: &str) -> Option<(&str, &str)> {
@@ -23,7 +20,7 @@ fn get_params(body: &str) -> Option<(&str, &str)> {
 }
 
 /// An asynchronous client for interacting with a Smartschool instance.
-#[derive(Clone, Debug)]
+#[derive(Debug)]
 pub struct Client<'a> {
     http_client: HttpClient,
     url: &'a str,
@@ -43,18 +40,9 @@ impl<'a> Client<'a> {
     /// * The URL is invalid or uses an unsupported protocol.
     /// * The server response didn't contain the login parameters.
     pub async fn login(url: &'a str, username: &str, password: &str) -> Result<Client<'a>> {
-        let http_client = HttpClient::builder()
-            .cookie_store(true)
-            .redirect(redirect::Policy::none())
-            .build()?;
-
+        let http_client = HttpClient::new();
         let request_url = format!("{}/login", url);
-        let response = http_client
-            .get(&request_url)
-            .try_send()
-            .await?
-            .text()
-            .await?;
+        let response = http_client.get(&request_url).recv_string().await?;
         let (gen_time, token) = get_params(&response).ok_or(Error::Authentication)?;
 
         let mut form = HashMap::new();
@@ -62,15 +50,10 @@ impl<'a> Client<'a> {
         form.insert("login_form[_password]", password);
         form.insert("login_form[_token]", token);
         form.insert("login_form[_username]", username);
-        let response = http_client
-            .post(&request_url)
-            .form(&form)
-            .try_send()
-            .await?;
 
-        let successful = response
-            .cookies()
-            .any(|cookie| cookie.name() == "PHPSESSID");
+        let response = http_client.post(&request_url).body_form(&form)?.await?;
+
+        let successful = response.cookies().any(|(name, _)| name == "PHPSESSID");
         if successful {
             Ok(Client { http_client, url })
         } else {
